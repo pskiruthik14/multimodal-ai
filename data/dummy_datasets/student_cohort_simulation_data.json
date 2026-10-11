@@ -1,0 +1,107 @@
+{
+  "dataset_name": "CS229 Longitudinal Student Cohort Interactions",
+  "total_records": 50,
+  "cohort_profiles": ["novice", "intermediate", "advanced"],
+  "bkt_hyperparameters": {
+    "P_L0_novice": 0.15,
+    "P_L0_intermediate": 0.35,
+    "P_L0_advanced": 0.60,
+    "P_T": 0.15,
+    "P_G": 0.20,
+    "P_S": 0.10
+  },
+  "interactions": [
+    {
+      "student_id": "student_novice_001",
+      "profile": "novice",
+      "session_num": 1,
+      "topic_id": "topic-1",
+      "question_id": "q-t1-01",
+      "item_difficulty_b": -1.2,
+      "student_answer": "B",
+      "is_correct": false,
+      "prior_mastery": 0.150,
+      "posterior_mastery": 0.052,
+      "diagnosed_misconception": "Memory misconception",
+      "time_spent_seconds": 45
+    },
+    {
+      "student_id": "student_novice_001",
+      "profile": "novice",
+      "session_num": 1,
+      "topic_id": "topic-1",
+      "question_id": "q-t1-02",
+      "item_difficulty_b": 0.2,
+      "student_answer": "1.61",
+      "is_correct": true,
+      "prior_mastery": 0.052,
+      "posterior_mastery": 0.231,
+      "diagnosed_misconception": null,
+      "time_spent_seconds": 68
+    },
+    {
+      "student_id": "student_inter_002",
+      "profile": "intermediate",
+      "session_num": 1,
+      "topic_id": "topic-2",
+      "question_id": "q-t2-01",
+      "item_difficulty_b": 0.1,
+      "student_answer": "A",
+      "is_correct": true,
+      "prior_mastery": 0.350,
+      "posterior_mastery": 0.672,
+      "diagnosed_misconception": null,
+      "time_spent_seconds": 32
+    },
+    {
+      "student_id": "student_inter_002",
+      "profile": "intermediate",
+      "session_num": 2,
+      "topic_id": "topic-2",
+      "question_id": "q-t2-02",
+      "item_difficulty_b": 1.2,
+      "student_answer": "4.0",
+      "is_correct": true,
+      "prior_mastery": 0.672,
+      "posterior_mastery": 0.845,
+      "diagnosed_misconception": null,
+      "time_spent_seconds": 55
+    },
+    {
+      "student_id": "student_adv_003",
+      "profile": "advanced",
+      "session_num": 1,
+      "topic_id": "topic-6",
+      "question_id": "q-t6-01",
+      "item_difficulty_b": 0.5,
+      "student_answer": "A",
+      "is_correct": true,
+      "prior_mastery": 0.600,
+      "posterior_mastery": 0.882,
+      "diagnosed_misconception": null,
+      "time_spent_seconds": 24
+    },
+    {
+      "student_id": "student_adv_003",
+      "profile": "advanced",
+      "session_num": 2,
+      "topic_id": "topic-6",
+      "question_id": "q-t6-02",
+      "item_difficulty_b": 1.4,
+      "student_answer": "A",
+      "is_correct": true,
+      "prior_mastery": 0.882,
+      "posterior_mastery": 0.941,
+      "diagnosed_misconception": null,
+      "time_spent_seconds": 38
+    }
+  ],
+  "aggregate_metrics": {
+    "novice_net_mastery_gain": "+3.2%",
+    "intermediate_net_mastery_gain": "+37.4%",
+    "advanced_net_mastery_gain": "+32.3%",
+    "overall_question_repetition_rate": "0.00%",
+    "total_questions_served": 50,
+    "unique_questions_served": 50
+  }
+}

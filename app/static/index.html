@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SynapseLearn AI | Multimodal Study Companion & Adaptive Tutor</title>
+  <meta name="description" content="Source-grounded multimodal AI study companion that unifies lecture videos, textbooks, and slides with Bayesian Knowledge Tracing and Adaptive Assessments.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-icon">🧠</div>
+      <div class="brand-text">
+        <h1>SynapseLearn AI</h1>
+        <div class="brand-subtitle">Multimodal Study Companion • Track D</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab-btn active" data-tab="chat">💬 Tutor Chat</button>
+      <button class="nav-tab-btn" data-tab="map">🗺️ Course Flow</button>
+      <button class="nav-tab-btn" data-tab="assessment">📝 Adaptive Quiz</button>
+      <button class="nav-tab-btn" data-tab="analytics">📊 Learner Model</button>
+      <button class="nav-tab-btn" data-tab="revision">🧠 Smart Revision</button>
+      <button class="nav-tab-btn" data-tab="eval">⚡ System Evaluation</button>
+      <button class="nav-tab-btn" data-tab="ingestion">📚 Knowledge Hub</button>
+    </nav>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <div class="course-badge">
+        <span class="pulse-dot"></span>
+        <span>CS229: Deep Learning</span>
+      </div>
+
+      <button id="hinglishToggleBtn" class="action-pill-btn" title="Toggle bilingual English + Hindi/Hinglish explanations">
+        🌐 Hinglish Mode
+      </button>
+
+      <button id="voiceToggleBtn" class="action-pill-btn" title="Toggle voice narration tutoring">
+        🎙️ Voice Tutor
+      </button>
+
+      <button id="settingsBtn" class="action-pill-btn" title="Configure Gemini API Key & Preferences">
+        ⚙️ Settings
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="main-container">
+
+    <!-- ----------------- TAB 1: TUTOR CHAT ----------------- -->
+    <section id="tab-chat" class="tab-pane active">
+      <div class="chat-container">
+        <!-- Main Chat Panel -->
+        <div class="chat-main-panel">
+          <div class="chat-header">
+            <div class="chat-header-title">
+              <span style="font-size: 1.25rem;">💬</span>
+              <div>
+                <div style="font-family: var(--font-serif); font-weight: 700; font-size: 1.1rem; color: var(--text-main);">Source-Grounded Companion Chat</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted);">
+                  Every claim is strictly cited to lecture video timestamps, slides, or textbook pages.
+                </div>
+              </div>
+            </div>
+            <div class="chat-status-indicator">
+              <span class="pulse-dot"></span>
+              <span>Guardrails Active (Strict Refusal)</span>
+            </div>
+          </div>
+
+          <!-- Multi-Persona Pedagogical AI Selector -->
+          <div class="persona-selector-bar">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">🎭 AI Persona:</span>
+            <button class="persona-btn active" data-persona="professor" title="Rigorous mathematical derivations & academic citations">🎓 Professor</button>
+            <button class="persona-btn" data-persona="feynman" title="Intuitive real-world analogies & ELI5 mental models">💡 Feynman (ELI5)</button>
+            <button class="persona-btn" data-persona="socratic" title="Scaffolded hints & guided active inquiry">🏛️ Socratic</button>
+            <button class="persona-btn" data-persona="cram" title="High-yield cheat-sheet bullet points & exam pitfalls">⚡ Exam Cram</button>
+          </div>
+
+          <div id="chatMessages" class="chat-messages">
+            <!-- Bot Welcome Bubble -->
+            <div class="message-bubble bot-msg">
+              <div class="message-meta">
+                <span class="bot-avatar-badge">🧠 SynapseLearn AI</span>
+                <span>•</span>
+                <span style="color: #2E7D32; font-weight: 600;">✓ Ingested Course Active</span>
+              </div>
+              <div>
+                Hello! I am your source-grounded multimodal study companion for <strong>CS229: Deep Learning & Neural Architectures</strong>. 
+                I unify your <strong>lecture videos</strong> (with second-level timestamps), <strong>textbooks</strong> (page citations), and <strong>slide decks</strong> (figures and equations).
+                <br><br>
+                Ask me any conceptual question, switch between AI personas above, or test my strict refusal guardrails on off-material queries!
+              </div>
+
+              <!-- Suggested Prompts -->
+              <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <button class="citation-chip suggestion-chip" data-query="Why is Cross-Entropy preferred over MSE for softmax classification?">
+                  💡 Cross-Entropy vs MSE Saturation
+                </button>
+                <button class="citation-chip suggestion-chip" data-query="How does Adam optimizer use bias correction in early iterations?">
+                  💡 Adam Bias Correction Formula
+                </button>
+                <button class="citation-chip suggestion-chip" data-query="How does ResNet skip connection prevent vanishing gradients?">
+                  💡 ResNet Identity Shortcut
+                </button>
+                <button class="citation-chip suggestion-chip" data-query="Why do Transformers scale dot-products by 1/sqrt(d_k)?">
+                  💡 Transformer Attention Scaling
+                </button>
+                <button class="citation-chip suggestion-chip" data-query="What is the traditional recipe to bake a chocolate cake?" style="border-color: rgba(183, 28, 28, 0.3); color: #B71C1C; background: rgba(183, 28, 28, 0.04);">
+                  ⛔ Test Refusal: Chocolate Cake Recipe
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-bar">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Ask a concept, equation, or proof... (e.g. 'Explain ResNet residual connections with citation')">
+            <button id="micBtn" class="action-pill-btn" style="padding: 0.75rem 1rem; border-radius: 9999px;" title="Speak question">
+              🎤
+            </button>
+            <button id="sendChatBtn" class="send-btn" title="Send Question">
+              ➤
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Grounding Sidebar -->
+        <aside class="chat-sidebar">
+          <div class="sidebar-panel">
+            <div class="panel-title">⚡ Multimodal AI Features</div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <button class="ai-tool-btn" onclick="window.openComparisonModal('optimizers')">
+                <span>⚖️</span> <span>Architecture Comparator</span>
+              </button>
+              <button class="ai-tool-btn" onclick="window.openDiagramExplainer('unit-tb-01')">
+                <span>🔍</span> <span>AI Diagram Explainer</span>
+              </button>
+              <button class="ai-tool-btn" onclick="window.openMisconceptionModal('Memory misconception', 'Loss Functions & Optimization Landscapes')">
+                <span>🩺</span> <span>Misconception Clinic</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-panel">
+            <div class="panel-title">🛡️ Grounding Guardrails</div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.85rem;">
+              Strict academic policy: queries outside your uploaded course materials are declined or flagged to eliminate hallucinations.
+            </div>
+            <div style="background: rgba(46, 125, 50, 0.06); border: 1px solid rgba(46, 125, 50, 0.2); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.75rem; color: #2E7D32; margin-bottom: 0.5rem; font-weight: 600;">
+              ✓ 100% Multimodal Grounding
+            </div>
+            <div style="background: rgba(183, 28, 28, 0.05); border: 1px solid rgba(183, 28, 28, 0.2); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.75rem; color: #B71C1C; font-weight: 600;">
+              ⛔ Auto-Refusal on Off-Topic Queries
+            </div>
+          </div>
+
+          <div class="sidebar-panel">
+            <div class="panel-title">📚 Active Course Sources</div>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.88rem; color: var(--text-main);">
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>🎥</span> <span>4 Lecture Videos (Timestamped)</span>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>📖</span> <span>6 Textbook Chapters (68+ Pages)</span>
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>🖼️</span> <span>4 Slide Decks (Diagrams & SVGs)</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="sidebar-panel">
+            <div class="panel-title">🇮🇳 Bilingual Tutor</div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6;">
+              Enable <strong>Hinglish Mode</strong> in the top header anytime to get intuitive Hindi + English conversational explanations while keeping technical citations intact.
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ----------------- TAB 2: COURSE FLOW MAP ----------------- -->
+    <section id="tab-map" class="tab-pane">
+      <div class="flow-map-container">
+        <div class="flow-map-toolbar">
+          <div style="font-family: var(--font-serif); font-weight: 700; font-size: 1.15rem; color: var(--text-main);">
+            🗺️ Interactive Course Flow & Concept Prerequisite DAG
+          </div>
+          <div class="legend-items">
+            <span><span class="legend-dot dot-mastered"></span> Mastered ($P(L_t) \ge 85\%$)</span>
+            <span><span class="legend-dot dot-developing"></span> Developing ($50\% - 84\%$)</span>
+            <span><span class="legend-dot dot-learning"></span> Learning ($< 50\%$)</span>
+          </div>
+        </div>
+
+        <div class="graph-canvas-wrapper">
+          <canvas id="knowledgeGraphCanvas"></canvas>
+        </div>
+
+        <div id="mapTopicDetails">
+          <div style="background: var(--bg-card); padding: 1.25rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border); border-top: 3px solid var(--accent); color: var(--text-muted); font-size: 0.92rem; line-height: 1.6;">
+            👆 Click on any topic node above to inspect prerequisites, key formulas, and launch a targeted assessment!
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------- TAB 3: ADAPTIVE QUIZ ----------------- -->
+    <section id="tab-assessment" class="tab-pane">
+      <div class="quiz-container">
+        <!-- Setup Header -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div>
+              <h2 style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">📝 Adaptive Assessment Studio</h2>
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Generate customized quizzes (MCQ, Short Answer, Numerical) with solver verification & 0% repetition.
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button id="generateQuizBtn" class="btn-outline">
+                ⚡ Standard Quiz
+              </button>
+              <button id="aiGenerateQuizBtn" class="btn-primary">
+                ✨ AI Synthesize Questions
+              </button>
+            </div>
+          </div>
+
+          <div class="quiz-setup-grid">
+            <div>
+              <label style="display: block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.45rem;">Topic Scope:</label>
+              <select id="quizTopicSelect" class="chat-input" style="width: 100%; border-radius: var(--radius-sm);">
+                <option value="all">Full Course (All Topics)</option>
+                <option value="topic-1">Topic 1: Loss Functions & Convexity</option>
+                <option value="topic-2">Topic 2: Gradient Descent & Adam</option>
+                <option value="topic-3">Topic 3: MLPs & Backpropagation</option>
+                <option value="topic-4">Topic 4: CNNs & Residual Connections</option>
+                <option value="topic-5">Topic 5: LSTMs & Sequence Modeling</option>
+                <option value="topic-6">Topic 6: Self-Attention & Transformers</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.45rem;">Difficulty Calibration:</label>
+              <select id="quizDifficultySelect" class="chat-input" style="width: 100%; border-radius: var(--radius-sm);">
+                <option value="adaptive">🎯 Adaptive (Zone of Proximal Development)</option>
+                <option value="easy">Foundational (Easy, b = -1.0)</option>
+                <option value="medium">Intermediate (Medium, b = 0.0)</option>
+                <option value="hard">Rigorous (Hard, b = +1.2)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.45rem;">Number of Questions:</label>
+              <select id="quizNumQuestionsSelect" class="chat-input" style="width: 100%; border-radius: var(--radius-sm);">
+                <option value="2">2 Questions (Fast Check)</option>
+                <option value="3" selected>3 Questions (Standard)</option>
+                <option value="4">4 Questions (Mock Exam)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Diagnostic Report Area (rendered dynamically) -->
+        <div id="quizReportArea" style="display: none;"></div>
+
+        <!-- Questions Rendering Area -->
+        <div id="quizQuestionsArea">
+          <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+            <div style="font-size: 3rem; margin-bottom: 0.75rem; color: var(--accent);">📋</div>
+            <div style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">No Active Assessment</div>
+            <div style="font-size: 0.88rem; margin-top: 0.35rem; color: var(--text-muted);">Click "Standard Quiz" or "AI Synthesize Questions" above to begin an adaptive assessment.</div>
+          </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 1rem;">
+          <button id="submitQuizBtn" class="btn-primary" style="display: none; padding: 0.75rem 2rem; font-size: 1rem;">
+            Submit Quiz & Diagnose
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------- TAB 4: LEARNER ANALYTICS ----------------- -->
+    <section id="tab-analytics" class="tab-pane">
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Top Stats Row -->
+        <div class="analytics-grid">
+          <div class="stat-widget">
+            <div class="stat-icon purple">🎯</div>
+            <div>
+              <div class="stat-val" id="statIrtTheta">+0.0</div>
+              <div class="stat-label">Latent Ability ($\theta$, IRT 2PL)</div>
+            </div>
+          </div>
+          <div class="stat-widget">
+            <div class="stat-icon green">📊</div>
+            <div>
+              <div class="stat-val" id="statAccuracy">0%</div>
+              <div class="stat-label">Overall Assessment Accuracy</div>
+            </div>
+          </div>
+          <div class="stat-widget">
+            <div class="stat-icon cyan">🏆</div>
+            <div>
+              <div class="stat-val" id="statMasteredCount">0 / 6</div>
+              <div class="stat-label">Mastered Topics ($P(L_t) \ge 85\%$)</div>
+            </div>
+          </div>
+          <div class="stat-widget">
+            <div class="stat-icon amber">⚠️</div>
+            <div>
+              <div class="stat-val" id="statWeakCount">0</div>
+              <div class="stat-label">Weak Topics Requiring Review</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BKT Mastery Section -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">📈 Bayesian Knowledge Tracing (BKT) Mastery Estimates</h3>
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Real-time per-topic mastery $P(L_t)$ updated mathematically after every quiz and tutoring dialogue.
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="startIntakeBtn" class="btn-outline" style="font-size: 0.82rem;">
+                🚀 Diagnostic Intake (Onboarding)
+              </button>
+              <button id="resetStudentModelBtn" class="btn-outline" style="font-size: 0.82rem; border-color: rgba(183, 28, 28, 0.25); color: #B71C1C;">
+                🔄 Reset History
+              </button>
+            </div>
+          </div>
+
+          <div id="bktTopicBars">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Ebbinghaus Forgetting Curve Section -->
+        <div class="glass-card">
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">
+            ⏳ Ebbinghaus Spaced Repetition & Memory Decay
+          </h3>
+          <div style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+            Predicts memory retention $R(t) = e^{-\Delta t / S}$ and triggers scheduled reviews before critical forgetting occurs.
+          </div>
+
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Topic</th>
+                  <th>Current Retention</th>
+                  <th>Last Studied</th>
+                  <th>Review Cycles</th>
+                  <th>Urgency Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="forgettingCurveTableBody">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------- TAB 5: SMART REVISION ----------------- -->
+    <section id="tab-revision" class="tab-pane">
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Flashcard Stage -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">🗂️ Leitner 5-Box Spaced Repetition Flashcards</h3>
+              <div id="fcIndexIndicator" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Loading flashcards...
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button id="aiGenerateFlashcardsBtn" class="btn-primary" style="font-size: 0.85rem;">
+                ✨ AI Synthesize Flashcards
+              </button>
+              <button id="prevFcBtn" class="btn-outline" style="font-size: 0.85rem;">◀ Previous</button>
+              <button id="nextFcBtn" class="btn-primary" style="font-size: 0.85rem;">Next ▶</button>
+            </div>
+          </div>
+
+          <div class="flashcard-stage">
+            <div id="revisionFlashcard" class="flashcard">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Cheat-Sheet & Audio Brief -->
+        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;">
+          <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+              <h3 style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--text-main);">📑 Targeted Topic Cheat-Sheet</h3>
+              <div style="display: flex; gap: 0.35rem;">
+                <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-1')">Topic 1</button>
+                <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-2')">Topic 2</button>
+                <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-3')">Topic 3</button>
+                <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-4')">Topic 4</button>
+                <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-5')">Topic 5</button>
+                <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-6')">Topic 6</button>
+              </div>
+            </div>
+            <div id="cheatSheetContent">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--text-main);">🎙️ 2-Minute Audio Brief</h3>
+              <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+                Listen to a rapid, high-density audio recap of this topic's key formulas, insights, and citations.
+              </div>
+              <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: var(--radius-sm); padding: 1.5rem; text-align: center;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent);">🎧</div>
+                <div style="font-family: var(--font-serif); font-weight: 700; font-size: 1.05rem; color: var(--text-main);">Podcast-Style Audio Summary</div>
+                <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">Synthesized with course citations</div>
+              </div>
+            </div>
+            <button class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1.25rem;" onclick="window.RevisionModule.playAudioBrief()">
+              🔊 Play Audio Brief Narration
+            </button>
+          </div>
+        </div>
+
+        <!-- Adaptive Study Schedule Planner -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+            <div>
+              <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">📅 Adaptive Exam Study Schedule Planner</h3>
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Allocates preparation hours prioritizing your identified weak topics and memory decay curves.
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-family: var(--font-mono); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Days until exam:</span>
+              <input type="number" id="scheduleDaysInput" class="chat-input" value="7" min="3" max="30" style="width: 70px; text-align: center; border-radius: var(--radius-sm);">
+              <button id="generateScheduleBtn" class="btn-primary" style="font-size: 0.85rem;">
+                Generate Schedule
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Day & Date</th>
+                  <th>Primary Focus Topic</th>
+                  <th>Study Time</th>
+                  <th>Prescribed Tasks & Citations</th>
+                </tr>
+              </thead>
+              <tbody id="studyScheduleTableBody">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------- TAB 6: SYSTEM EVALUATION ----------------- -->
+    <section id="tab-eval" class="tab-pane">
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- RAGAS Framework Benchmark Section -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+            <div>
+              <h2 style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">⚡ System Evaluation & Framework Benchmarks</h2>
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Standard RAGAS & DeepEval pipeline metrics (Faithfulness, Relevancy, Precision, Recall, and Refusal Accuracy).
+              </div>
+            </div>
+            <button id="runBenchmarkBtn" class="btn-primary">
+              ⚡ Run Full RAGAS Benchmark
+            </button>
+          </div>
+
+          <div id="benchmarkResultsArea" style="display: none;"></div>
+
+          <h4 style="font-family: var(--font-serif); font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.85rem;">
+            Curated Ground-Truth & Adversarial Test Set (12 Queries):
+          </h4>
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Query ID</th>
+                  <th>Test Query</th>
+                  <th>Classification</th>
+                  <th>Ground Truth Source Location</th>
+                </tr>
+              </thead>
+              <tbody id="benchmarkDatasetTableBody">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Personalization Simulation Section -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+            <div>
+              <h2 style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">🤖 Multi-Session Student Simulation & Personalization</h2>
+              <div style="font-size: 0.88rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Simulates student cohorts across 5 longitudinal sessions, reporting mastery gains and 0% question repetition.
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <select id="simProfileSelect" class="chat-input" style="border-radius: var(--radius-sm);">
+                <option value="novice">Novice / Struggling Learner (Prior=0.15)</option>
+                <option value="intermediate" selected>Intermediate / Steady Learner (Prior=0.35)</option>
+                <option value="advanced">Advanced / Fast Learner (Prior=0.60)</option>
+              </select>
+              <button id="runSimulationBtn" class="btn-primary" style="font-size: 0.85rem;">
+                ▶️ Run Simulation
+              </button>
+            </div>
+          </div>
+
+          <div id="simulationResultsArea" style="display: none;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------- TAB 7: KNOWLEDGE HUB ----------------- -->
+    <section id="tab-ingestion" class="tab-pane">
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Ingestion Zone -->
+        <div class="glass-card" id="uploadDropzone" style="border: 2px dashed var(--border); text-align: center; padding: 2.75rem 1.5rem;">
+          <input type="file" id="materialFileInput" style="display: none;" accept=".pdf,.pptx,.ppt,.vtt,.srt,.txt,.json">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent);">📤</div>
+          <h3 style="font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">Ingest New Multimodal Course Materials</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 550px; margin: 0 auto 1.35rem; line-height: 1.6;">
+            Drag and drop <strong>Textbooks (PDF)</strong>, <strong>Slide Decks (PPTX)</strong>, or <strong>Lecture Transcripts (VTT/SRT)</strong> without manual preprocessing.
+          </p>
+          <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <button id="triggerUploadBtn" class="btn-primary">
+              📁 Select Course File to Ingest
+            </button>
+            <button id="loadDummyDataBtn" class="btn-outline" onclick="window.loadDummyMaterials()">
+              📥 Ingest Sample Dummy Datasets
+            </button>
+          </div>
+          <div id="uploadStatusText" style="margin-top: 0.85rem; font-size: 0.85rem; color: var(--text-muted);"></div>
+        </div>
+
+        <!-- Filter & Browser -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Ingested Content Units & Sources</h3>
+          <div style="display: flex; gap: 0.35rem;">
+            <button class="action-pill-btn source-filter-btn active-toggle" data-filter="all">All Sources</button>
+            <button class="action-pill-btn source-filter-btn" data-filter="video">🎥 Videos</button>
+            <button class="action-pill-btn source-filter-btn" data-filter="textbook">📖 Textbooks</button>
+            <button class="action-pill-btn source-filter-btn" data-filter="slide">🖼️ Slides</button>
+          </div>
+        </div>
+
+        <!-- Grid of content units -->
+        <div id="knowledgeUnitsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Deep Citation Modal Viewer -->
+  <div id="citationModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="citationModalTitle" style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">📌 Source Citation</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="citationModalBody" class="modal-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings / API Key Modal -->
+  <div id="settingsModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">⚙️ Application Settings</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div>
+          <label style="display: block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.45rem;">
+            Google Gemini API Key (Optional):
+          </label>
+          <input type="password" id="geminiApiKeyInput" class="chat-input" placeholder="AIzaSy..." style="width: 100%; border-radius: var(--radius-sm);">
+          <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.45rem; line-height: 1.5;">
+            When provided, calls live <code>gemini-2.0-flash</code> with strict grounding prompts. If empty, uses the built-in local grounded synthesis engine!
+          </div>
+        </div>
+
+        <div style="margin-top: 1.25rem; padding: 1rem 1.15rem; background: var(--bg-secondary); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text-main); line-height: 1.6;">
+          💡 <strong>Built-in Offline Engine:</strong> The entire pipeline—Hybrid Retrieval, BKT, IRT, Misconception Diagnostics, and Evaluation—runs 100% locally with zero external API dependencies.
+        </div>
+
+        <div style="text-align: right; margin-top: 1.25rem;">
+          <button class="btn-primary" onclick="saveSettings()">Save Preferences</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagnostic Intake Onboarding Modal -->
+  <div id="intakeModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">🚀 Diagnostic Intake: Calibrate Starting Knowledge</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.25rem;">
+          Welcome to CS229! Complete this 2-minute diagnostic onboarding so SynapseLearn AI can calibrate your starting Bayesian Knowledge Tracing prior $P(L_0)$ and latent ability $\theta$.
+        </p>
+
+        <div>
+          <label style="display: block; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.45rem;">
+            What is your current background in Machine Learning?
+          </label>
+          <select id="intakeLevelSelect" class="chat-input" style="width: 100%; border-radius: var(--radius-sm);">
+            <option value="beginner">Beginner: New to ML & Neural Networks (Prior $P(L_0)=0.15$)</option>
+            <option value="intermediate" selected>Intermediate: Comfortable with Calculus, Python & Basics (Prior $P(L_0)=0.35$)</option>
+            <option value="advanced">Advanced: Experienced Practitioner, Reviewing Advanced Architectures (Prior $P(L_0)=0.60$)</option>
+          </select>
+        </div>
+
+        <div style="margin-top: 1.25rem;">
+          <div style="font-family: var(--font-mono); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 0.75rem;">
+            Quick Diagnostic Screening (3 Questions):
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--text-main);">
+            <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <div style="font-weight: 600; margin-bottom: 0.45rem;">1. If $dL/dw > 0$, how should $w$ change to minimize loss?</div>
+              <label style="display: block; margin-bottom: 0.35rem; cursor: pointer;"><input type="radio" name="diag-ans-diag-01" value="A"> A) Decrease w (opposite to gradient)</label>
+              <label style="display: block; cursor: pointer;"><input type="radio" name="diag-ans-diag-01" value="B"> B) Increase w (in gradient direction)</label>
+            </div>
+
+            <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <div style="font-weight: 600; margin-bottom: 0.45rem;">2. What does a deep network with only linear activation functions $f(z)=z$ compute?</div>
+              <label style="display: block; margin-bottom: 0.35rem; cursor: pointer;"><input type="radio" name="diag-ans-diag-01" value="A"> A) A single linear transformation, regardless of depth</label>
+              <label style="display: block; cursor: pointer;"><input type="radio" name="diag-ans-diag-01" value="B"> B) A high-degree polynomial non-linear transformation</label>
+            </div>
+
+            <div style="background: var(--bg-secondary); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+              <div style="font-weight: 600; margin-bottom: 0.45rem;">3. What primary inductive bias of images do CNNs exploit?</div>
+              <label style="display: block; margin-bottom: 0.35rem; cursor: pointer;"><input type="radio" name="diag-ans-diag-03" value="A"> A) Translation invariance and spatial locality</label>
+              <label style="display: block; cursor: pointer;"><input type="radio" name="diag-ans-diag-03" value="B"> B) Permutation equivariance across token sequence</label>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <button class="btn-primary" onclick="submitDiagnosticIntake()">
+            Complete Onboarding & Calibrate
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Misconception Remediation Clinic Modal -->
+  <div id="remediationModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 id="remediationModalTitle" style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">🩺 AI Misconception Remediation Clinic</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="remediationModalBody" class="modal-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Architecture & Concept Comparison Modal -->
+  <div id="comparisonModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 id="comparisonModalTitle" style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">⚖️ AI Architectural Comparison Matrix</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+          <button class="action-pill-btn active-toggle" onclick="window.loadComparison('optimizers')">Optimizers: Adam vs SGD</button>
+          <button class="action-pill-btn" onclick="window.loadComparison('losses')">Losses: Cross-Entropy vs MSE</button>
+          <button class="action-pill-btn" onclick="window.loadComparison('architectures')">Architectures: RNN vs LSTM vs Transformer</button>
+        </div>
+        <div id="comparisonModalBody" class="table-responsive">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Multimodal Diagram Explainer Modal -->
+  <div id="diagramExplainerModal" class="modal-backdrop">
+    <div class="modal-window" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 id="diagramExplainerTitle" style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">🔍 AI Multimodal Diagram & Vector Explainer</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="diagramExplainerBody" class="modal-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/chat.js"></script>
+  <script src="/static/js/knowledge_map.js"></script>
+  <script src="/static/js/assessment.js"></script>
+  <script src="/static/js/learner_model.js"></script>
+  <script src="/static/js/revision.js"></script>
+  <script src="/static/js/evaluation.js"></script>
+  <script src="/static/js/ingestion.js"></script>
+</body>
+</html>

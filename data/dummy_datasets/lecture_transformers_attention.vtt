@@ -1,0 +1,19 @@
+WEBVTT - CS229 Lecture 4: Transformers and Self-Attention
+
+00:00:15.000 --> 00:00:48.000
+Welcome back everyone. Today we are diving into one of the most consequential architectures in modern deep learning: the Transformer.
+
+00:00:49.000 --> 00:01:25.000
+Before Transformers, sequence modeling was dominated by Recurrent Neural Networks and LSTMs. The problem with LSTMs is that computation is strictly sequential: to compute the hidden state at step 50, you must compute all 49 preceding steps.
+
+00:01:26.000 --> 00:02:10.000
+The breakthrough of Vaswani et al. in Attention Is All You Need was dispensing with recurrence entirely. Instead of passing a hidden state across time, every single token computes pairwise interactions with all other tokens simultaneously via Self-Attention.
+
+00:02:12.000 --> 00:02:58.000
+Mathematically, we project each token embedding into three vectors: Query Q, Key K, and Value V, using learned weight matrices W_Q, W_K, and W_V. The attention weights are computed via scaled dot-product: Attention(Q, K, V) = softmax( (Q * K^T) / sqrt(d_k) ) * V.
+
+00:03:00.000 --> 00:03:45.000
+Why do we scale by 1 / sqrt(d_k)? If the dimension d_k is large, say 64 or 128, the dot products grow large in magnitude, which pushes the softmax function into regions where gradients are infinitesimally small. Scaling by 1 / sqrt(d_k) preserves unit variance and keeps gradients flowing.
+
+00:03:46.000 --> 00:04:30.000
+Finally, remember that self-attention is permutation-equivariant. Shuffling the words in a sentence yields the exact same outputs, just permuted. To provide the model with word order, we must add Positional Encodings to our input embeddings using sinusoidal functions.

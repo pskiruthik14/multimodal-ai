@@ -1,0 +1,30 @@
+Chapter 2: Optimization Landscapes, Curvature, and Adaptive Algorithms
+
+Section 2.1: Ill-Conditioned Curvature and the Hessian Matrix
+In high-dimensional parameter spaces, the local geometry of the loss surface L(w) around any point w is determined by the Taylor expansion:
+L(w + delta_w) \approx L(w) + \nabla L(w)^T delta_w + \frac{1}{2} delta_w^T H delta_w
+
+Where H = \nabla^2 L(w) is the symmetric Hessian matrix containing second-order partial derivatives. The condition number of the Hessian is defined as:
+\kappa = \frac{\lambda_{max}}{\lambda_{min}}
+
+When \kappa \gg 1, the loss landscape forms an ill-conditioned ravine. In such geometries, the gradient points almost perpendicularly to the direction of the local minimum, causing un-momentumized Gradient Descent to oscillate wildly across the steep ravine walls while making negligible progress along the ravine floor.
+
+Section 2.2: Polyak Heavy-Ball Momentum
+Polyak's momentum addresses this pathology by maintaining a velocity vector v_t:
+v_t = \beta v_{t-1} + (1 - \beta) g_t
+w_{t+1} = w_t - \alpha v_t
+
+Because high-frequency oscillations point in alternating opposite directions, the velocity updates cancel out along the steep axis, while consistently reinforcing momentum along the gentle downhill direction.
+
+Section 2.3: Adam Optimizer and Bias Correction
+The Adaptive Moment Estimation (Adam) algorithm computes exponentially decaying averages of past gradients (first moment m_t) and past squared gradients (second moment v_t):
+m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t
+v_t = \beta_2 v_{t-1} + (1 - \beta_2) g_t^2
+
+Because m_0 and v_0 are initialized as zero vectors, the estimators are heavily biased towards zero during initial training steps. To correct this initialization bias, Adam computes bias-corrected estimates:
+\hat{m}_t = \frac{m_t}{1 - \beta_1^t}
+\hat{v}_t = \frac{v_t}{1 - \beta_2^t}
+
+The final parameter update is:
+w_{t+1} = w_t - \frac{\alpha}{\sqrt{\hat{v}_t} + \epsilon} \hat{m}_t
+Where standard default hyperparameters are \alpha = 10^{-3}, \beta_1 = 0.9, \beta_2 = 0.999, and \epsilon = 10^{-8}.

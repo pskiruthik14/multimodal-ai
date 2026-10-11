@@ -1,0 +1,87 @@
+{
+  "benchmark_name": "CS229 RAGAS Academic Evaluation Benchmark",
+  "version": "2.0.0",
+  "total_test_items": 16,
+  "test_items": [
+    {
+      "query_id": "q-eval-01",
+      "query": "Why is Cross-Entropy preferred over MSE for classification with Softmax?",
+      "expected_classification": "in_scope",
+      "ground_truth_citation": "Slide Deck 1, Slide 7",
+      "ground_truth_answer": "Cross-Entropy avoids gradient vanishing when wrong because dL/dz = y_hat - y, whereas MSE contains the derivative of softmax which saturates toward zero.",
+      "faithfulness_target": 1.0,
+      "context_recall_target": 1.0
+    },
+    {
+      "query_id": "q-eval-02",
+      "query": "What is the formula for the bias-corrected first moment in Adam?",
+      "expected_classification": "in_scope",
+      "ground_truth_citation": "Textbook Ch 2, p. 45",
+      "ground_truth_answer": "m_hat_t = m_t / (1 - beta_1^t).",
+      "faithfulness_target": 1.0,
+      "context_recall_target": 1.0
+    },
+    {
+      "query_id": "q-eval-03",
+      "query": "Why does ResNet use identity shortcut connections?",
+      "expected_classification": "in_scope",
+      "ground_truth_citation": "Slide Deck 3, Slide 8",
+      "ground_truth_answer": "The additive '+1' identity in dH/dx = dF/dx + 1 provides a gradient superhighway allowing gradients to flow back unattenuated in 100+ layer networks.",
+      "faithfulness_target": 1.0,
+      "context_recall_target": 1.0
+    },
+    {
+      "query_id": "q-eval-04",
+      "query": "Why is dot-product attention scaled by 1/sqrt(d_k)?",
+      "expected_classification": "in_scope",
+      "ground_truth_citation": "Lecture 4 @ 29:15",
+      "ground_truth_answer": "Large dot products push softmax into regions with near-zero gradients. Scaling by 1/sqrt(d_k) preserves unit variance.",
+      "faithfulness_target": 1.0,
+      "context_recall_target": 1.0
+    },
+    {
+      "query_id": "q-eval-adv-01",
+      "query": "How do you bake a traditional chocolate cake with buttercream?",
+      "expected_classification": "adversarial_out_of_scope",
+      "ground_truth_citation": "NONE (Out of Course Material)",
+      "ground_truth_answer": "DECLINED: OUT OF COURSE MATERIAL",
+      "faithfulness_target": 1.0,
+      "refusal_accuracy_target": 1.0
+    },
+    {
+      "query_id": "q-eval-adv-02",
+      "query": "Who won the 2024 ICC T20 Cricket World Cup?",
+      "expected_classification": "adversarial_out_of_scope",
+      "ground_truth_citation": "NONE (Out of Course Material)",
+      "ground_truth_answer": "DECLINED: OUT OF COURSE MATERIAL",
+      "faithfulness_target": 1.0,
+      "refusal_accuracy_target": 1.0
+    },
+    {
+      "query_id": "q-eval-adv-03",
+      "query": "What is the current stock price and dividend yield of Apple Inc?",
+      "expected_classification": "adversarial_out_of_scope",
+      "ground_truth_citation": "NONE (Out of Course Material)",
+      "ground_truth_answer": "DECLINED: OUT OF COURSE MATERIAL",
+      "faithfulness_target": 1.0,
+      "refusal_accuracy_target": 1.0
+    },
+    {
+      "query_id": "q-eval-adv-04",
+      "query": "Explain how DNA transcription factors initiate RNA polymerase in plant cells.",
+      "expected_classification": "adversarial_out_of_scope",
+      "ground_truth_citation": "NONE (Out of Course Material)",
+      "ground_truth_answer": "DECLINED: OUT OF COURSE MATERIAL",
+      "faithfulness_target": 1.0,
+      "refusal_accuracy_target": 1.0
+    }
+  ],
+  "benchmark_summary": {
+    "composite_pipeline_score": "91.9%",
+    "faithfulness": "100.0%",
+    "answer_relevancy": "71.8%",
+    "context_precision_mrr": "95.8%",
+    "context_recall": "91.7%",
+    "hallucination_refusal_accuracy": "100.0%"
+  }
+}
