@@ -100,6 +100,35 @@ Open your browser and navigate to:
 http://127.0.0.1:8080
 ```
 
+---
+
+## 🌐 Cloud Deployment Options
+
+### 1. Live Instant Access
+The application is currently live and reachable globally via the HTTPS tunnel:
+- **Live URL**: [https://7e7e3508ebe04b.lhr.life](https://7e7e3508ebe04b.lhr.life)
+
+### 2. One-Click Cloud Deploy
+Deploy directly from this GitHub repository with one click:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pskiruthik14/multimodal-ai)
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/new?template=https://github.com/pskiruthik14/multimodal-ai)
+
+### 3. Deploy with Docker
+```bash
+docker build -t synapselearn-ai .
+docker run -p 8080:8080 -e PORT=8080 synapselearn-ai
+```
+
+### 4. Deploy to Hugging Face Spaces
+1. Create a new Space on [Hugging Face](https://huggingface.co/new-space).
+2. Select **Docker** as the Space SDK (Blank template).
+3. Connect repository `pskiruthik14/multimodal-ai` or push code to the Space remote.
+4. The application will build from the included `Dockerfile` and be live with a permanent `*.hf.space` URL!
+
+---
+
 ### 3. Run Automated Tests
 ```bash
 python -m pytest tests/test_all.py -v
