@@ -52,5 +52,6 @@ def on_startup():
 if __name__ == "__main__":
     import os
     port = int(os.getenv("PORT", 8080))
-    print(f">> Starting SynapseLearn AI on port {port}")
-    uvicorn.run(app, host="127.0.0.1", port=port)
+    host = os.getenv("HOST", "0.0.0.0")
+    print(f">> Starting SynapseLearn AI on {host}:{port}")
+    uvicorn.run("main:app", host=host, port=port)
