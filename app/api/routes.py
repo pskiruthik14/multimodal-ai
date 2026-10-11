@@ -100,10 +100,31 @@ class SimulationRequest(BaseModel):
     num_sessions: int = 5
     questions_per_session: int = 2
 
+def normalize_content_units():
+    """Cleans up raw filenames and extracts proper headings, topics, and citations for all units."""
+    from app.ingestion.extractor import (
+        clean_document_name, clean_text_artifacts, clean_heading_string,
+        extract_smart_heading, extract_smart_tags, infer_smart_topic
+    )
+    for u in course.content_units:
+        if (".pdf" in u.title or "_" in u.title or u.topic_name == "User Uploaded Material" or ".pptx" in u.title
+            or "Textbook Multilingual" in u.citation_label or "\ufffd" in u.title or "" in u.title):
+            doc_name = clean_document_name(u.source_name or u.title)
+            page_num = u.page_number or u.slide_number or 1
+            clean_text = clean_text_artifacts(u.text_content)
+            u.text_content = clean_text
+            u.title = clean_heading_string(extract_smart_heading(clean_text, doc_name, page_num))
+            u.citation_label = f"{doc_name}, p. {page_num}"
+            topic_id, topic_name = infer_smart_topic(clean_text, doc_name)
+            u.topic_id = topic_id
+            u.topic_name = topic_name
+            u.concept_tags = [clean_heading_string(t) for t in extract_smart_tags(clean_text, u.title) if clean_heading_string(t)]
+
 # ----------------- 1. Course & Knowledge Base -----------------
 @router.get("/course")
 def get_course_data():
     """Returns course structure, topics, and multimodal content units."""
+    normalize_content_units()
     return {
         "id": course.id,
         "name": course.name,

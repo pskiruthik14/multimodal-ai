@@ -1,7 +1,7 @@
 /**
  * Ingestion & Multimodal Knowledge Hub Module:
  * Synchronizes Course Materials across Video Timestamps, Textbook Pages, and Slide Decks.
- * Features live multi-field search, topic filtering, modality filtering, and interactive unit cards.
+ * Features live multi-field search, dynamic topic filtering, modality filtering, and interactive unit cards.
  */
 
 window.IngestionModule = {
@@ -27,10 +27,34 @@ window.IngestionModule = {
       if (!res.ok) return;
       const data = await res.json();
       this.currentUnits = data.content_units || [];
+      this.populateTopicFilter();
       this.renderStatsStrip();
       this.renderUnits();
     } catch (err) {
       console.error('Failed to load course units:', err);
+    }
+  },
+
+  populateTopicFilter() {
+    const select = document.getElementById('knowledgeTopicFilter');
+    if (!select || !this.currentUnits.length) return;
+
+    const currentVal = select.value;
+    const topicMap = new Map();
+    this.currentUnits.forEach(u => {
+      if (u.topic_id && u.topic_name) {
+        topicMap.set(u.topic_id, u.topic_name);
+      }
+    });
+
+    let options = `<option value="all">All Topics (${this.currentUnits.length} Units)</option>`;
+    topicMap.forEach((name, id) => {
+      const count = this.currentUnits.filter(u => u.topic_id === id).length;
+      options += `<option value="${id}">${name} (${count})</option>`;
+    });
+    select.innerHTML = options;
+    if (topicMap.has(currentVal)) {
+      select.value = currentVal;
     }
   },
 
@@ -96,6 +120,34 @@ window.IngestionModule = {
     this.renderUnits();
   },
 
+  formatDisplayTitle(unit) {
+    if (!unit.title) return 'Course Material Excerpt';
+    let t = unit.title;
+    if (t.includes('.pdf') || t.includes('_') || t.includes('.pptx')) {
+      const cleanText = (unit.text_content || '').replace(/[\ufffd\u2022\u2023\u25e6\u2043\u2219\uf0a7\uf0b7]/g, ' ').trim();
+      const headers = [
+        "AIM & OBJECTIVES OF THE PROJECT", "AIM & OBJECTIVES", "PROJECT OBJECTIVES",
+        "LITERATURE SURVEY", "NEED FOR THE CURRENT STUDY", "FEASIBILITY ANALYSIS",
+        "PROPOSED METHODOLOGY", "SYSTEM ARCHITECTURE", "SCOPE OF THE PROJECT",
+        "PROBLEM STATEMENT", "EXPECTED OUTCOMES", "CONCLUSION", "PROJECT TITLE"
+      ];
+      for (const h of headers) {
+        if (cleanText.toUpperCase().includes(h)) {
+          return h.replace(/\w\S*/g, (w) => (w.toLowerCase() === 'of' || w.toLowerCase() === 'the') ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.substr(1).toLowerCase());
+        }
+      }
+      t = t.replace(/\.pdf|\.pptx|\.txt/gi, '').replace(/[_\-]+/g, ' ').trim();
+    }
+    return t;
+  },
+
+  formatCitation(unit) {
+    if (!unit.citation_label) return 'Course Repository';
+    let c = unit.citation_label;
+    c = c.replace(/Textbook\s+/gi, '').replace(/\.pdf|\.pptx/gi, '').replace(/[_\-]+/g, ' ');
+    return c;
+  },
+
   renderUnits() {
     const container = document.getElementById('knowledgeUnitsGrid');
     const badge = document.getElementById('knowledgeUnitsCountBadge');
@@ -154,7 +206,7 @@ window.IngestionModule = {
       card.style.flexDirection = 'column';
       card.style.justifyContent = 'space-between';
       card.style.borderTop = '3px solid var(--accent)';
-      card.style.padding = '1.35rem';
+      card.style.padding = '1.4rem';
       card.style.gap = '0.85rem';
 
       let icon = '📖';
@@ -171,31 +223,36 @@ window.IngestionModule = {
         tagColor = '#E65100';
       }
 
+      const displayTitle = this.formatDisplayTitle(unit);
+      const displayCitation = this.formatCitation(unit);
+      const cleanSnippet = (unit.text_content || '').replace(/[\ufffd\u2022\u2023\u25e6\u2043\u2219\uf0a7\uf0b7]/g, ' ').trim();
+      const cleanTags = (unit.concept_tags || []).filter(t => !t.startsWith('Page ') && t !== 'Uploaded Textbook');
+
       card.innerHTML = `
         <div>
           <!-- Top Row: Source Type & Topic -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.35rem;">
-            <span style="background: ${tagBg}; border: 1px solid ${tagColor}33; color: ${tagColor}; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); letter-spacing: 0.05em;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem; flex-wrap: wrap; gap: 0.45rem;">
+            <span style="background: ${tagBg}; border: 1px solid ${tagColor}33; color: ${tagColor}; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; padding: 0.22rem 0.65rem; border-radius: var(--radius-sm); letter-spacing: 0.05em;">
               ${icon} ${unit.source_type.toUpperCase()}
             </span>
-            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+            <span style="font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted); font-weight: 500; background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm);">
               ${unit.topic_name}
             </span>
           </div>
 
           <!-- Unit Title -->
-          <h4 style="font-family: var(--font-serif); font-size: 1.12rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; line-height: 1.4;">
-            ${unit.title}
+          <h4 style="font-family: var(--font-serif); font-size: 1.18rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem; line-height: 1.4;">
+            ${displayTitle}
           </h4>
 
           <!-- Exact Grounding Citation -->
-          <div style="font-family: var(--font-mono); font-size: 0.76rem; font-weight: 600; color: var(--accent); margin-bottom: 0.65rem;">
-            📌 ${unit.citation_label}
+          <div style="font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; color: var(--accent); margin-bottom: 0.65rem;">
+            📌 ${displayCitation}
           </div>
 
           <!-- Text Excerpt -->
-          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.75rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-            "${unit.text_content}"
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0.85rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-style: italic;">
+            "${cleanSnippet}"
           </p>
 
           <!-- Badges for Diagram and Equations -->
@@ -214,10 +271,10 @@ window.IngestionModule = {
           </div>
 
           <!-- Concept Tags -->
-          ${unit.concept_tags && unit.concept_tags.length ? `
+          ${cleanTags.length ? `
             <div style="display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem;">
-              ${unit.concept_tags.slice(0, 3).map(tag => `
-                <span style="font-family: var(--font-mono); font-size: 0.7rem; background: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border); padding: 0.15rem 0.45rem; border-radius: var(--radius-sm);">
+              ${cleanTags.map(tag => `
+                <span style="font-family: var(--font-mono); font-size: 0.7rem; background: var(--bg-secondary); color: var(--text-main); border: 1px solid var(--border); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm);">
                   #${tag}
                 </span>
               `).join('')}
@@ -226,18 +283,18 @@ window.IngestionModule = {
         </div>
 
         <!-- Footer Actions -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.75rem; border-top: 1px solid var(--border); gap: 0.45rem; flex-wrap: wrap;">
-          <button class="btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" onclick="window.openCitationModal('${unit.id}')">
-            📌 Inspect Excerpt
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.85rem; border-top: 1px solid var(--border); gap: 0.5rem; flex-wrap: wrap;">
+          <button class="btn-outline" style="font-size: 0.78rem; padding: 0.4rem 0.85rem; border-radius: var(--radius-sm); font-weight: 500;" onclick="window.openCitationModal('${unit.id}')">
+            📌 Inspect Source
           </button>
-          <div style="display: flex; gap: 0.35rem;">
+          <div style="display: flex; gap: 0.4rem; align-items: center;">
             ${unit.visual_description ? `
-              <button class="action-pill-btn" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;" onclick="window.openDiagramExplainer('${unit.id}')" title="Analyze diagram elements and tensor flows with AI">
+              <button class="btn-outline" style="font-size: 0.78rem; padding: 0.4rem 0.75rem; border-radius: var(--radius-sm);" onclick="window.openDiagramExplainer('${unit.id}')" title="Analyze diagram elements and tensor flows with AI">
                 🔍 Diagram
               </button>
             ` : ''}
-            <button class="action-pill-btn" style="font-size: 0.72rem; padding: 0.3rem 0.65rem;" onclick="window.askTutorAboutUnit('${unit.title.replace(/'/g, "\\'")}', '${unit.topic_name.replace(/'/g, "\\'")}')" title="Ask AI Tutor about this unit">
-              💬 Tutor
+            <button class="btn-primary" style="font-size: 0.78rem; padding: 0.4rem 0.85rem; border-radius: var(--radius-sm); font-weight: 600;" onclick="window.askTutorAboutUnit('${displayTitle.replace(/'/g, "\\'")}', '${unit.topic_name.replace(/'/g, "\\'")}')" title="Ask AI Tutor about this unit">
+              💬 Ask Tutor
             </button>
           </div>
         </div>
@@ -305,7 +362,7 @@ window.IngestionModule = {
 
   async uploadFile(file) {
     const statusEl = document.getElementById('uploadStatusText');
-    if (statusEl) statusEl.innerHTML = `<span style="color: var(--accent); font-weight: 500;">⏳ Ingesting ${file.name}... extracting pages, slides & diagrams...</span>`;
+    if (statusEl) statusEl.innerHTML = `<span style="color: var(--accent); font-weight: 500;">⏳ Ingesting ${file.name}... extracting sections, formulas & diagrams...</span>`;
 
     const formData = new FormData();
     formData.append('file', file);

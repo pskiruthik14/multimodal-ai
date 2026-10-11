@@ -6,7 +6,7 @@ and Video Transcripts (VTT/SRT/JSON) into structured ContentUnits with exact cit
 import os
 import re
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 from app.ingestion.models import ContentUnit, SourceType
 
@@ -40,6 +40,94 @@ def parse_vtt_or_srt(content: str) -> List[Dict[str, Any]]:
             })
     return cues
 
+def clean_document_name(filename: str) -> str:
+    name = Path(filename).stem
+    name = re.sub(r'[_\-]+', ' ', name)
+    name = re.sub(r'\s+', ' ', name).strip().title()
+    for acr in ["Llm", "Msme", "Nlp", "Ai", "Api", "Cnn", "Rnn", "Vtt", "Srt", "Pdf", "Pptx", "Ui", "Ux"]:
+        name = re.sub(rf"\b{acr}\b", acr.upper(), name)
+    return name
+
+def clean_text_artifacts(text: str) -> str:
+    text = re.sub(r'[\ufffd\u2022\u2023\u25e6\u2043\u2219\uf0a7\uf0b7•–—―\u00ad]', ' ', text)
+    text = re.sub(r'\s+[?]\s+', ' — ', text)
+    text = re.sub(r'[?]+', ' ', text)
+    return ' '.join(text.split())
+
+COMMON_SECTION_HEADERS = [
+    "AIM & OBJECTIVES OF THE PROJECT", "AIM & OBJECTIVES", "PROJECT OBJECTIVES",
+    "LITERATURE SURVEY", "NEED FOR THE CURRENT STUDY", "FEASIBILITY ANALYSIS",
+    "PROPOSED METHODOLOGY", "SYSTEM ARCHITECTURE", "SCOPE OF THE PROJECT",
+    "PROBLEM STATEMENT", "EXPECTED OUTCOMES", "CONCLUSION", "REFERENCES",
+    "PROJECT TITLE", "INTRODUCTION", "MOTIVATION", "GANTT CHART", "FLOW CHART",
+    "DATASET DESCRIPTION", "EXPERIMENTAL SETUP", "RESULTS & EVALUATION"
+]
+
+def clean_heading_string(h: str) -> str:
+    h = re.sub(r'[\ufffd\u2022\u2023\u25e6\u2043\u2219\uf0a7\uf0b7•–—―\u00ad\?]', ' ', h)
+    h = re.sub(r'\s+[A-Z]\s*$', '', h)
+    h = re.sub(r'\s+[A-Z]\s+[A-Z]\s*$', '', h)
+    h = re.sub(r'\s+', ' ', h).strip()
+    return h
+
+def extract_smart_heading(clean_text: str, doc_name: str, page_num: int) -> str:
+    clean = clean_text_artifacts(clean_text)
+    clean_upper = clean.upper()
+    for ch in COMMON_SECTION_HEADERS:
+        idx = clean_upper.find(ch)
+        if 0 <= idx < 120:
+            rest = clean[idx + len(ch):].strip()
+            rest = re.sub(r'^[\-\–:\s]+', '', rest)
+            parts = re.split(r'[\.\n\?!;]|(?=[a-z])', rest)
+            sub = parts[0].strip() if parts else ''
+            sub = re.sub(r'[_\-]+', ' ', sub).strip()
+            if 3 <= len(sub) <= 35:
+                sub_clean = sub.title().replace('Of The', 'of the')
+                if len(sub_clean.split()) > 1 or len(sub_clean) > 5:
+                    return clean_heading_string(f"{ch.title().replace('Of The', 'of the')} — {sub_clean}")
+            return clean_heading_string(ch.title().replace('Of The', 'of the'))
+    m = re.match(r"^([A-Z0-9\s&:\-–/]{4,55})(?=[a-z\n\.\?]|Sl\.|\s{2,})", clean)
+    if m:
+        h = m.group(1).strip().title()
+        h = clean_heading_string(h)
+        if len(h) >= 4 and not h.startswith("Sl"):
+            return h
+    first_clause = re.split(r"[.\n\?!;]", clean)[0].strip()
+    if 4 <= len(first_clause) <= 50:
+        return clean_heading_string(first_clause.title())
+    return f"{doc_name} — Section {page_num}"
+
+def extract_smart_tags(clean_text: str, heading: str) -> List[str]:
+    tags = []
+    if heading and len(heading) <= 30 and "Section" not in heading:
+        tags.append(heading)
+    domain_terms = [
+        "Multilingual LLM", "Voice Analytics", "Fake Review Detection", "MSME Platform",
+        "System Architecture", "Feasibility Analysis", "Literature Survey", "Project Scope",
+        "Risk Mitigation", "Flowchart", "Gantt Chart", "Sentiment Analysis", "Transformers",
+        "Speech Recognition", "Deep Learning", "API Integration", "Database Schema"
+    ]
+    for term in domain_terms:
+        if term.lower() in clean_text.lower() and term not in tags:
+            tags.append(term)
+            if len(tags) >= 4:
+                break
+    for acr in ["LLM", "MSME", "NLP", "ASR", "TTS", "API", "UI/UX", "SGD", "CNN", "RNN"]:
+        if re.search(rf"\b{acr}\b", clean_text, re.IGNORECASE) and acr not in tags:
+            tags.append(acr)
+            if len(tags) >= 4:
+                break
+    return tags[:4] if tags else ["System Design", "Project Work"]
+
+def infer_smart_topic(clean_text: str, doc_name: str) -> Tuple[str, str]:
+    text_lower = clean_text.lower()
+    if "multilingual" in text_lower or "llm" in text_lower or "msme" in text_lower:
+        return "topic-multilingual-llm", "Multilingual LLM & MSME Systems"
+    if "feasibility" in text_lower or "survey" in text_lower or "literature" in text_lower:
+        return "topic-system-engineering", "System Engineering & Literature Survey"
+    slug = re.sub(r'[^a-zA-Z0-9]', '-', doc_name).lower()[:20]
+    return f"topic-{slug}", doc_name
+
 class MultimodalExtractor:
     """Extracts multimodal content units from uploaded textbooks, slides, and videos."""
     
@@ -47,6 +135,7 @@ class MultimodalExtractor:
     def extract_from_pdf(file_path: Path, filename: str) -> List[ContentUnit]:
         """Extract pages and figures from PDF textbook."""
         units = []
+        doc_name = clean_document_name(filename)
         try:
             import pypdfium2 as pdfium
             pdf = pdfium.PdfDocument(file_path)
@@ -58,7 +147,7 @@ class MultimodalExtractor:
                 page_text = textpage.get_text_range() or ""
                 page_num = page_idx + 1
                 
-                clean_text = " ".join(page_text.split())
+                clean_text = clean_text_artifacts(page_text)
                 if len(clean_text) < 30:
                     continue
                     
@@ -72,32 +161,37 @@ class MultimodalExtractor:
                     if fig_match:
                         visual_desc = f"Extracted Diagram: {fig_match.group(1).strip()}"
                 
+                heading = extract_smart_heading(clean_text, doc_name, page_num)
+                tags = extract_smart_tags(clean_text, heading)
+                topic_id, topic_name = infer_smart_topic(clean_text, doc_name)
+                
                 units.append(ContentUnit(
                     id=f"pdf-{uuid.uuid4().hex[:8]}",
-                    title=f"{filename} (Page {page_num})",
+                    title=heading,
                     source_type=SourceType.TEXTBOOK,
-                    source_name=filename,
-                    citation_label=f"Textbook {filename}, p. {page_num}",
+                    source_name=doc_name,
+                    citation_label=f"{doc_name}, p. {page_num}",
                     page_number=page_num,
                     text_content=clean_text[:1200],
                     visual_description=visual_desc,
                     equations=equations,
-                    topic_id="topic-custom",
-                    topic_name="User Uploaded Material",
-                    concept_tags=["Uploaded Textbook", f"Page {page_num}"]
+                    topic_id=topic_id,
+                    topic_name=topic_name,
+                    concept_tags=tags
                 ))
         except Exception as e:
             # Fallback simple reading if pdfium fails
             units.append(ContentUnit(
                 id=f"pdf-err-{uuid.uuid4().hex[:8]}",
-                title=f"{filename} (Extracted Content)",
+                title=f"{doc_name} (Section 1)",
                 source_type=SourceType.TEXTBOOK,
-                source_name=filename,
-                citation_label=f"Textbook {filename}, p. 1",
+                source_name=doc_name,
+                citation_label=f"{doc_name}, p. 1",
                 page_number=1,
                 text_content=f"Ingested PDF {filename}. Extraction note: {str(e)}",
                 topic_id="topic-custom",
-                topic_name="User Uploaded Material"
+                topic_name=doc_name,
+                concept_tags=["System Design", "Document Excerpt"]
             ))
         return units
 
