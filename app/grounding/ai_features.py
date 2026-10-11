@@ -9,6 +9,7 @@ Advanced AI Features Engine for SynapseLearn AI:
 from typing import Dict, Any, List, Optional
 import httpx
 from app.ingestion.models import Course, ContentUnit
+from app.services.ai_service import AIService
 from app.config import settings
 
 class AIMisconceptionClinic:
@@ -94,50 +95,26 @@ class AIMisconceptionClinic:
         api_key_override: Optional[str] = None
     ) -> Dict[str, Any]:
         """Generates interactive diagnostic coaching for a student misconception."""
-        api_key = api_key_override or settings.GEMINI_API_KEY
-        
-        # 1. Check live Gemini API
-        if api_key:
-            try:
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    prompt = (
-                        f"You are a master AI tutor in CS229 Deep Learning. A student holds the following misconception:\n"
-                        f"Topic: {topic_name}\n"
-                        f"Diagnosed Misconception: '{misconception_text}'\n\n"
-                        f"Provide a structured remediation JSON with keys:\n"
-                        f"- title: short catchy title\n"
-                        f"- explanation: clear mathematical and physical breakdown of why the misconception is wrong and what is actually true\n"
-                        f"- key_takeaway: 1-sentence memorable rule\n"
-                        f"- practice_question: short multiple-choice question to test understanding\n"
-                        f"- practice_options: array of 3 options [A, B, C]\n"
-                        f"- practice_correct: correct letter\n"
-                        f"- practice_explanation: explanation of correct choice\n"
-                        f"Return JSON only."
-                    )
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
-                    resp = await client.post(url, json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"responseMimeType": "application/json"}
-                    })
-                    if resp.status_code == 200:
-                        import json
-                        data = resp.json()
-                        raw_json = data["candidates"][0]["content"]["parts"][0]["text"]
-                        parsed = json.loads(raw_json)
-                        return {
-                            "title": parsed.get("title", f"Remediation: {topic_name}"),
-                            "explanation": parsed.get("explanation", ""),
-                            "key_takeaway": parsed.get("key_takeaway", ""),
-                            "citation": f"CS229 Syllabus Grounding • {topic_name}",
-                            "practice_check": {
-                                "question": parsed.get("practice_question", ""),
-                                "options": parsed.get("practice_options", []),
-                                "correct": parsed.get("practice_correct", "A"),
-                                "explanation": parsed.get("practice_explanation", "")
-                            }
-                        }
-            except Exception:
-                pass
+        # 1. Attempt Generative AI remediation via AIService
+        ai_res = await AIService.remediate_misconception(
+            misconception_text=misconception_text,
+            topic_name=topic_name,
+            api_key_override=api_key_override
+        )
+        if ai_res and isinstance(ai_res, dict):
+            practice = ai_res.get("practice_check", {})
+            return {
+                "title": ai_res.get("title", f"Remediation: {topic_name}"),
+                "explanation": ai_res.get("explanation", ""),
+                "key_takeaway": ai_res.get("key_takeaway", ""),
+                "citation": ai_res.get("citation", f"CS229 Grounding • {topic_name}"),
+                "practice_check": {
+                    "question": practice.get("question", ai_res.get("practice_question", "")),
+                    "options": practice.get("options", ai_res.get("practice_options", [])),
+                    "correct": practice.get("correct", ai_res.get("practice_correct", "A")),
+                    "explanation": practice.get("explanation", ai_res.get("practice_explanation", ""))
+                }
+            }
 
         # 2. Local Heuristic Engine
         matched_key = "default"
@@ -225,6 +202,27 @@ class AIDiagramExplainer:
             "mathematical_takeaway": "Grounding diagrams in mathematical formulations prevents misinterpretation of vector dimensionalities.",
             "citation": "CS229 Multimodal Technical Figures"
         }
+
+    @classmethod
+    async def explain_diagram_ai(
+        cls,
+        unit_id: str,
+        content_unit: Optional[ContentUnit] = None,
+        api_key_override: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Provides dynamic Generative AI diagram analysis using Gemini for any figure or content unit."""
+        if content_unit and (content_unit.visual_description or content_unit.equations):
+            ai_res = await AIService.explain_diagram(
+                diagram_title=content_unit.title,
+                visual_description=content_unit.visual_description or content_unit.text_content,
+                equations=content_unit.equations or [],
+                citation=content_unit.citation_label,
+                api_key_override=api_key_override
+            )
+            if ai_res and isinstance(ai_res, dict):
+                return ai_res
+
+        return cls.explain_diagram(unit_id)
 
 
 class AIConceptComparator:
@@ -336,3 +334,19 @@ class AIConceptComparator:
         elif "arch" in key or "rnn" in key or "lstm" in key or "transformer" in key or "sequence" in key:
             return cls.COMPARISON_TOPICS["architectures"]
         return cls.COMPARISON_TOPICS["optimizers"]
+
+    @classmethod
+    async def compare_concepts_ai(
+        cls,
+        comparison_key: str,
+        api_key_override: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Dynamically generates comprehensive trade-off matrix for ANY concept query via Generative AI."""
+        ai_res = await AIService.compare_concepts(
+            comparison_query=comparison_key,
+            api_key_override=api_key_override
+        )
+        if ai_res and isinstance(ai_res, dict) and "headers" in ai_res and "rows" in ai_res:
+            return ai_res
+
+        return cls.get_comparison(comparison_key)

@@ -9,6 +9,8 @@ import random
 from app.assessment.models import Question, QuestionType, DifficultyLevel
 from app.assessment.deduplicator import QuestionDeduplicator
 from app.assessment.cross_validator import QuestionCrossValidator
+from app.services.ai_service import AIService
+import uuid
 
 PRELOADED_QUESTION_BANK: List[Question] = [
     # ================= TOPIC 1: Loss Functions =================
@@ -330,54 +332,36 @@ class AdaptiveAssessmentGenerator:
         }
         topic_name = topic_names.get(topic_id, "Loss Functions & Optimization Landscapes")
 
-        # 1. Attempt Gemini Generation if API key is provided
-        if api_key:
-            try:
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    prompt = (
-                        f"You are an expert examiner for CS229: Deep Learning. Generate {num_questions} novel, rigorous questions "
-                        f"for the topic '{topic_name}' at difficulty '{difficulty.value}'.\n"
-                        f"Each question must include:\n"
-                        f"- question_text: clear problem statement\n"
-                        f"- type: 'mcq' or 'numerical'\n"
-                        f"- options: array of 4 options ['A) ...', 'B) ...', 'C) ...', 'D) ...'] if mcq, else empty\n"
-                        f"- correct_answer: 'A', 'B', 'C', or 'D' (or number string if numerical)\n"
-                        f"- solution_explanation: step-by-step mathematical proof\n"
-                        f"- misconception_distractors: map of wrong options to explanation of why a student made that mistake\n"
-                        f"- citation_label: source citation string\n\n"
-                        f"Return JSON array of question objects only."
-                    )
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
-                    resp = await client.post(url, json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"responseMimeType": "application/json"}
-                    })
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        raw_json = data["candidates"][0]["content"]["parts"][0]["text"]
-                        items = json.loads(raw_json)
-                        for it in items:
-                            q_obj = Question(
-                                id=f"ai-{uuid.uuid4().hex[:8]}",
-                                topic_id=topic_id,
-                                topic_name=topic_name,
-                                type=QuestionType.MCQ if it.get("type", "mcq") == "mcq" else QuestionType.NUMERICAL,
-                                difficulty=difficulty,
-                                irt_difficulty_b=0.0 if difficulty == DifficultyLevel.MEDIUM else (-1.0 if difficulty == DifficultyLevel.EASY else 1.2),
-                                irt_discrimination_a=1.2,
-                                question_text=it.get("question_text", ""),
-                                options=it.get("options", []),
-                                correct_answer=str(it.get("correct_answer", "A")),
-                                solution_explanation=it.get("solution_explanation", ""),
-                                misconception_distractors=it.get("misconception_distractors", {}),
-                                citation_label=it.get("citation_label", f"CS229 Grounding: {topic_name}"),
-                                source_unit_id="unit-ai-gen",
-                                verification_status="verified_cross_model"
-                            )
-                            if self.validator.validate_question(q_obj):
-                                generated_questions.append(q_obj)
-            except Exception:
-                pass
+        # 1. Attempt Generative AI question synthesis via AIService
+        ai_raw_items = await AIService.generate_questions(
+            topic_name=topic_name,
+            difficulty=difficulty.value,
+            num_questions=num_questions,
+            api_key_override=api_key_override
+        )
+        if ai_raw_items:
+            for it in ai_raw_items:
+                b_diff = float(it.get("irt_difficulty_b", 0.0 if difficulty == DifficultyLevel.MEDIUM else (-1.0 if difficulty == DifficultyLevel.EASY else 1.2)))
+                a_disc = float(it.get("irt_discrimination_a", 1.2))
+                q_obj = Question(
+                    id=f"ai-{uuid.uuid4().hex[:8]}",
+                    topic_id=topic_id,
+                    topic_name=topic_name,
+                    type=QuestionType.MCQ if it.get("type", "mcq") == "mcq" else QuestionType.NUMERICAL,
+                    difficulty=difficulty,
+                    irt_difficulty_b=b_diff,
+                    irt_discrimination_a=a_disc,
+                    question_text=it.get("question_text", ""),
+                    options=it.get("options", []),
+                    correct_answer=str(it.get("correct_answer", "A")),
+                    solution_explanation=it.get("solution_explanation", ""),
+                    misconception_distractors=it.get("misconception_distractors", {}),
+                    citation_label=it.get("citation_label", f"CS229 Grounding: {topic_name}"),
+                    source_unit_id="unit-ai-gen",
+                    verification_status="verified_cross_model"
+                )
+                if self.validator.validate_question(q_obj):
+                    generated_questions.append(q_obj)
 
         # 2. Local AI Algorithmic Procedural Generator (Fallback or Offline)
         if not generated_questions:

@@ -27,6 +27,7 @@ from app.evaluation.student_simulator import MultiSessionSimulator
 from app.evaluation.benchmark_dataset import BENCHMARK_TEST_SET
 from app.revision.generator import RevisionSuiteManager
 from app.grounding.ai_features import AIMisconceptionClinic, AIDiagramExplainer, AIConceptComparator
+from app.services.ai_service import AIService
 from app.config import settings
 
 router = APIRouter(prefix="/api")
@@ -66,13 +67,23 @@ class RemediateRequest(BaseModel):
 
 class DiagramExplainRequest(BaseModel):
     unit_id: str
+    api_key_override: Optional[str] = None
 
 class ComparisonRequest(BaseModel):
     comparison_key: str = "optimizers"
+    api_key_override: Optional[str] = None
 
 class AIFlashcardsRequest(BaseModel):
     topic_id: str = "topic-1"
     num_cards: int = 3
+    api_key_override: Optional[str] = None
+
+class AICheatSheetRequest(BaseModel):
+    topic_id: str = "topic-1"
+    api_key_override: Optional[str] = None
+
+class AIAudioBriefRequest(BaseModel):
+    topic_id: str = "topic-1"
     api_key_override: Optional[str] = None
 
 class IntakeRequest(BaseModel):
@@ -82,6 +93,7 @@ class IntakeRequest(BaseModel):
 class StudyScheduleRequest(BaseModel):
     days_until_exam: int = 7
     hours_per_day: float = 2.0
+    api_key_override: Optional[str] = None
 
 class SimulationRequest(BaseModel):
     profile_key: str = "intermediate"
@@ -130,9 +142,19 @@ async def upload_material(file: UploadFile = File(...)):
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported file format: {ext}")
 
-    # Tag extracted units and add to course
+    # Tag extracted units, enrich with AI, and add to course
     for u in extracted_units:
         kg_manager.tag_content_unit(u)
+        if not u.equations or not u.visual_description:
+            try:
+                enrichment = await AIService.enrich_uploaded_content(u.text_content, filename)
+                if enrichment and isinstance(enrichment, dict):
+                    if not u.equations and enrichment.get("equations"):
+                        u.equations = enrichment["equations"]
+                    if not u.visual_description and enrichment.get("visual_description"):
+                        u.visual_description = enrichment["visual_description"]
+            except Exception:
+                pass
         course.content_units.append(u)
 
     # Re-index hybrid retriever
@@ -381,14 +403,15 @@ def get_cheat_sheet(topic_id: str):
     return sheet
 
 @router.post("/revision/study-schedule")
-def generate_study_schedule(req: StudyScheduleRequest):
-    """Generates day-by-day exam prep schedule based on weak topics and forgetting curves."""
+async def generate_study_schedule(req: StudyScheduleRequest):
+    """Generates day-by-day exam prep schedule based on weak topics and forgetting curves using AI."""
     mastery_map = learner_model.get_all_mastery()
     weak_topic_ids = [tid for tid, m in mastery_map.items() if m < 0.60]
-    return RevisionSuiteManager.generate_study_schedule(
+    return await RevisionSuiteManager.generate_ai_study_schedule(
         weak_topic_ids=weak_topic_ids,
         days_until_exam=req.days_until_exam,
-        hours_per_day=req.hours_per_day
+        hours_per_day=req.hours_per_day,
+        api_key_override=req.api_key_override
     )
 
 @router.get("/revision/audio-brief/{topic_id}")
@@ -396,9 +419,25 @@ def get_audio_brief(topic_id: str):
     """Returns 2-minute audio brief summary script for speech synthesis."""
     return RevisionSuiteManager.generate_audio_brief(topic_id)
 
+@router.post("/revision/ai-audio-brief")
+async def generate_ai_audio_brief(req: AIAudioBriefRequest):
+    """Dynamically generates 2-minute spoken conversational audio brief script using Generative AI."""
+    return await RevisionSuiteManager.generate_ai_audio_brief(
+        topic_id=req.topic_id,
+        api_key_override=req.api_key_override
+    )
+
+@router.post("/revision/ai-cheat-sheet")
+async def generate_ai_cheat_sheet(req: AICheatSheetRequest):
+    """Dynamically generates high-yield exam cheat-sheet formulas and insights using Generative AI."""
+    return await RevisionSuiteManager.generate_ai_cheat_sheet(
+        topic_id=req.topic_id,
+        api_key_override=req.api_key_override
+    )
+
 @router.post("/revision/ai-flashcards")
 async def generate_ai_flashcards(req: AIFlashcardsRequest):
-    """Dynamically synthesizes novel Leitner flashcards using AI/Gemini or course syllabus."""
+    """Dynamically synthesizes novel Leitner flashcards using Generative AI/Gemini."""
     return await RevisionSuiteManager.generate_ai_flashcards(
         topic_id=req.topic_id,
         num_cards=req.num_cards,
@@ -408,7 +447,7 @@ async def generate_ai_flashcards(req: AIFlashcardsRequest):
 # ----------------- 7. Advanced Multimodal AI Features -----------------
 @router.post("/ai/remediate")
 async def remediate_misconception(req: RemediateRequest):
-    """Generates targeted diagnostic breakdown and follow-up challenge for diagnosed misconceptions."""
+    """Generates targeted cognitive diagnostic breakdown and interactive follow-up challenge for misconceptions."""
     return await AIMisconceptionClinic.remediate(
         misconception_text=req.misconception,
         topic_name=req.topic_name,
@@ -416,12 +455,43 @@ async def remediate_misconception(req: RemediateRequest):
     )
 
 @router.post("/ai/diagram-explain")
-def explain_diagram(req: DiagramExplainRequest):
-    """Provides deep structural diagram analysis and vector flow breakdowns for course figures."""
-    return AIDiagramExplainer.explain_diagram(req.unit_id)
+async def explain_diagram(req: DiagramExplainRequest):
+    """Provides deep structural diagram analysis and vector flow breakdowns for figures dynamically via AI."""
+    unit = next((u for u in course.content_units if u.id == req.unit_id), None)
+    return await AIDiagramExplainer.explain_diagram_ai(
+        unit_id=req.unit_id,
+        content_unit=unit,
+        api_key_override=req.api_key_override
+    )
 
 @router.post("/ai/compare")
-def compare_concepts(req: ComparisonRequest):
-    """Generates comprehensive comparison matrices for architectures, optimizers, and loss functions."""
-    return AIConceptComparator.get_comparison(req.comparison_key)
+async def compare_concepts(req: ComparisonRequest):
+    """Generates comprehensive trade-off comparison matrices for ANY concepts dynamically via Generative AI."""
+    return await AIConceptComparator.compare_concepts_ai(
+        comparison_key=req.comparison_key,
+        api_key_override=req.api_key_override
+    )
+
+@router.get("/ai/status")
+def get_ai_status():
+    """Returns AI Engine model configuration, active capabilities, and health status."""
+    return {
+        "status": "online",
+        "model": settings.GEMINI_MODEL,
+        "api_key_configured": bool(settings.GEMINI_API_KEY),
+        "engine": "Google Gemini 2.0 / 2.5 Flash + Multimodal Generative Synthesis",
+        "capabilities": [
+            "Source-Grounded Multimodal Tutor",
+            "Multi-Persona Synthesis (Professor, Feynman, Socratic, Cram, Hinglish)",
+            "Dynamic AI Question Synthesis with Misconception Distractors",
+            "Cognitive Misconception Remediation Clinic",
+            "Generative Concept & Trade-off Matrix Comparator",
+            "Multimodal Neural Architecture & Diagram Explainer",
+            "Dynamic Leitner Spaced-Repetition Flashcards",
+            "Generative High-Yield Exam Cheat-Sheets",
+            "Spoken 2-Minute Audio Brief Script Synthesis",
+            "Adaptive Spaced-Repetition Study Timetable",
+            "Multimodal Document Ingestion & Formula Enrichment"
+        ]
+    }
 

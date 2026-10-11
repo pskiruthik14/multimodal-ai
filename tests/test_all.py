@@ -154,11 +154,26 @@ def test_ai_features_and_personas():
     
     comp = AIConceptComparator.get_comparison("optimizers")
     assert len(comp["rows"]) == 4
+
+    comp_ai = loop.run_until_complete(AIConceptComparator.compare_concepts_ai("optimizers"))
+    assert len(comp_ai["rows"]) >= 3
     
-    # 5. Test AI Flashcards
+    # 5. Test AI Flashcards, Cheat Sheet, Audio Brief & Schedule
     fc = loop.run_until_complete(RevisionSuiteManager.generate_ai_flashcards("topic-2", num_cards=2))
     assert len(fc) == 2
     assert "Adam" in fc[0]["front"] or "Optimizer" in fc[0]["front"] or "Formula" in fc[0]["back"]
+
+    cs = loop.run_until_complete(RevisionSuiteManager.generate_ai_cheat_sheet("topic-1"))
+    assert "key_formulas" in cs
+    assert len(cs["key_formulas"]) >= 2
+
+    ab = loop.run_until_complete(RevisionSuiteManager.generate_ai_audio_brief("topic-1"))
+    assert "script" in ab
+    assert len(ab["script"]) > 50
+
+    sched = loop.run_until_complete(RevisionSuiteManager.generate_ai_study_schedule(["topic-1"], days_until_exam=3))
+    assert len(sched) >= 3
+
     loop.close()
 
 if __name__ == "__main__":

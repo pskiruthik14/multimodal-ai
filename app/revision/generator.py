@@ -6,6 +6,8 @@ and audio briefs for spaced repetition review.
 
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+import uuid
+from app.services.ai_service import AIService
 
 PRELOADED_FLASHCARDS = [
     {
@@ -240,46 +242,29 @@ class RevisionSuiteManager:
         api_key_override: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """Dynamically generates novel Leitner flashcards using Gemini or local syllabus synthesis."""
-        import uuid
-        import json
-        import httpx
-        from app.config import settings
-
-        api_key = api_key_override or settings.GEMINI_API_KEY
         cards: List[Dict[str, Any]] = []
         sheet = TOPIC_CHEAT_SHEETS.get(topic_id, TOPIC_CHEAT_SHEETS["topic-1"])
+        topic_title = sheet["title"].replace(" Cheat-Sheet", "")
 
-        if api_key:
-            try:
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    prompt = (
-                        f"You are a flashcard author for CS229: Deep Learning. Generate {num_cards} high-yield Leitner flashcards "
-                        f"for '{sheet['title']}'. Return a JSON array of objects with keys: front, back, citation."
-                    )
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
-                    resp = await client.post(url, json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"responseMimeType": "application/json"}
-                    })
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        raw_json = data["candidates"][0]["content"]["parts"][0]["text"]
-                        items = json.loads(raw_json)
-                        for idx, it in enumerate(items):
-                            cards.append({
-                                "id": f"ai-fc-{uuid.uuid4().hex[:6]}",
-                                "topic_id": topic_id,
-                                "topic_name": sheet["title"].replace(" Cheat-Sheet", ""),
-                                "front": it.get("front", ""),
-                                "back": it.get("back", ""),
-                                "citation": it.get("citation", sheet["citations"][0]),
-                                "box": (idx % 3) + 1
-                            })
-            except Exception:
-                pass
+        ai_items = await AIService.generate_flashcards(
+            topic_name=topic_title,
+            num_cards=num_cards,
+            api_key_override=api_key_override
+        )
+        if ai_items and isinstance(ai_items, list):
+            for idx, it in enumerate(ai_items):
+                cards.append({
+                    "id": f"ai-fc-{uuid.uuid4().hex[:6]}",
+                    "topic_id": topic_id,
+                    "topic_name": topic_title,
+                    "front": it.get("front", ""),
+                    "back": it.get("back", ""),
+                    "citation": it.get("citation", sheet["citations"][0]),
+                    "box": int(it.get("box", (idx % 3) + 1))
+                })
 
         if not cards:
-            # Algorithmic syllabus synthesis
+            # Algorithmic syllabus synthesis fallback
             pool = [
                 {
                     "front": f"What is the foundational mathematical objective of {sheet['title'].replace(' Cheat-Sheet', '')}?",
@@ -309,4 +294,66 @@ class RevisionSuiteManager:
                 })
 
         return cards
+
+    @staticmethod
+    async def generate_ai_cheat_sheet(
+        topic_id: str,
+        api_key_override: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Dynamically generates high-yield exam cheat-sheet using Generative AI."""
+        sheet = TOPIC_CHEAT_SHEETS.get(topic_id, {})
+        topic_title = sheet.get("title", f"Topic {topic_id}").replace(" Cheat-Sheet", "")
+        ai_res = await AIService.generate_cheat_sheet(
+            topic_name=topic_title,
+            api_key_override=api_key_override
+        )
+        if ai_res and isinstance(ai_res, dict) and "key_formulas" in ai_res:
+            return ai_res
+        return TOPIC_CHEAT_SHEETS.get(topic_id, TOPIC_CHEAT_SHEETS["topic-1"])
+
+    @staticmethod
+    async def generate_ai_audio_brief(
+        topic_id: str,
+        api_key_override: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Synthesizes a 2-minute spoken conversational audio brief script using Generative AI."""
+        sheet = TOPIC_CHEAT_SHEETS.get(topic_id, TOPIC_CHEAT_SHEETS["topic-1"])
+        topic_title = sheet.get("title", f"Topic {topic_id}").replace(" Cheat-Sheet", "")
+        ai_res = await AIService.generate_audio_brief(
+            topic_name=topic_title,
+            api_key_override=api_key_override
+        )
+        if ai_res and isinstance(ai_res, dict) and "script" in ai_res:
+            return {
+                "topic_id": topic_id,
+                "title": ai_res.get("title", f"Audio Brief: {topic_title}"),
+                "duration_est": ai_res.get("duration_est", "2 minutes"),
+                "script": ai_res.get("script", ""),
+                "citations": ai_res.get("citations", sheet.get("citations", []))
+            }
+        return RevisionSuiteManager.generate_audio_brief(topic_id)
+
+    @staticmethod
+    async def generate_ai_study_schedule(
+        weak_topic_ids: List[str],
+        days_until_exam: int = 7,
+        hours_per_day: float = 2.0,
+        api_key_override: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Generates an AI personalized study plan prioritizing weak topics via Gemini."""
+        all_topics = list(TOPIC_CHEAT_SHEETS.keys())
+        ai_schedule = await AIService.generate_study_schedule(
+            weak_topics=weak_topic_ids,
+            all_topics=all_topics,
+            days_until_exam=days_until_exam,
+            hours_per_day=hours_per_day,
+            api_key_override=api_key_override
+        )
+        if ai_schedule and isinstance(ai_schedule, list) and len(ai_schedule) > 0:
+            return ai_schedule
+        return RevisionSuiteManager.generate_study_schedule(
+            weak_topic_ids=weak_topic_ids,
+            days_until_exam=days_until_exam,
+            hours_per_day=hours_per_day
+        )
 

@@ -13,6 +13,7 @@ from app.grounding.verifier import GroundingVerifier
 from app.grounding.citation_engine import CitationEngine
 from app.grounding.bilingual import BilingualEngine
 from app.learner_model.bkt import LearnerModel
+from app.services.ai_service import AIService
 from app.config import settings
 
 PERSONA_SYSTEM_INSTRUCTIONS = {
@@ -237,46 +238,18 @@ class GroundedTutor:
         modal_payloads = [self.citation_engine.build_citation_modal_data(u) for u in top_units]
         citation_chips = [f"[{u.citation_label}]" for u in top_units]
 
-        # 3. Check for live Gemini API key
-        api_key = api_key_override or settings.GEMINI_API_KEY
-        answer_text = ""
-
-        if api_key:
-            try:
-                async with httpx.AsyncClient(timeout=15.0) as client:
-                    context_str = "\n\n".join([
-                        f"Source: {u.citation_label}\nContent: {u.text_content}\nVisuals: {u.visual_description or 'None'}"
-                        for u in top_units
-                    ])
-                    persona_key = persona.lower() if persona.lower() in PERSONA_SYSTEM_INSTRUCTIONS else "professor"
-                    persona_instr = PERSONA_SYSTEM_INSTRUCTIONS[persona_key]
-                    
-                    if bilingual_mode:
-                        lang_instr = "Provide explanation in intuitive conversational Hinglish (Hindi + English) with English technical terms."
-                    else:
-                        lang_instr = "Provide clear academic explanation in English."
-                    
-                    system_prompt = (
-                        f"{persona_instr}\n\n"
-                        "Answer strictly and exclusively using the provided course context excerpts below. "
-                        "Explicitly cite source locations (e.g. [Lecture 1 @ 06:15] or [Textbook Ch 1, p. 18]). "
-                        f"{lang_instr}\n"
-                        "Do NOT introduce speculative external knowledge."
-                    )
-                    
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
-                    payload = {
-                        "contents": [
-                            {"role": "user", "parts": [{"text": f"Context:\n{context_str}\n\nStudent Question: {query}"}]}
-                        ],
-                        "systemInstruction": {"parts": [{"text": system_prompt}]}
-                    }
-                    resp = await client.post(url, json=payload)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        answer_text = data["candidates"][0]["content"]["parts"][0]["text"]
-            except Exception:
-                answer_text = ""
+        # 3. Call Generative AI Engine (Gemini / Multimodal)
+        context_str = "\n\n".join([
+            f"Source: {u.citation_label}\nContent: {u.text_content}\nVisuals: {u.visual_description or 'None'}"
+            for u in top_units
+        ])
+        answer_text = await AIService.generate_grounded_answer(
+            query=query,
+            context_str=context_str,
+            persona=persona,
+            bilingual_mode=bilingual_mode,
+            api_key_override=api_key_override
+        ) or ""
 
         # 4. Built-in Local Multi-Persona Synthesis Engine (if no API key or API call failed)
         if not answer_text:
