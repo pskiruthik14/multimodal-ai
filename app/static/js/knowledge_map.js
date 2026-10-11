@@ -82,6 +82,7 @@ window.KnowledgeMapModule = {
       const scaledY = padY + ((node.y - minY) / (maxY - minY || 1)) * (height - 2 * padY);
       nodeMap[node.id] = { ...node, screenX: scaledX, screenY: scaledY };
     });
+    this.scaledNodeMap = nodeMap;
 
     // 1. Draw Prerequisite Edges (Curved Bézier Arrows with warm rule styling)
     this.graphData.edges.forEach(edge => {

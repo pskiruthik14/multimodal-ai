@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Default tab initialize
   if (window.ChatModule) window.ChatModule.init();
+  if (window.KnowledgeMapModule) window.KnowledgeMapModule.init();
 });
 
 function initNavigation() {
@@ -48,9 +49,16 @@ function switchTab(tabId) {
     pane.classList.toggle('active', pane.id === `tab-${tabId}`);
   });
 
+  // Smooth scroll to top of main container for aligned reading experience
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   // Trigger tab-specific loaders
   if (tabId === 'map' && window.KnowledgeMapModule) {
-    window.KnowledgeMapModule.render();
+    if (!window.KnowledgeMapModule.canvas) {
+      window.KnowledgeMapModule.init();
+    } else {
+      window.KnowledgeMapModule.render();
+    }
   } else if (tabId === 'assessment' && window.AssessmentModule) {
     window.AssessmentModule.init();
   } else if (tabId === 'analytics' && window.LearnerModelModule) {
@@ -362,22 +370,36 @@ window.openComparisonModal = async function(key = 'optimizers') {
   await window.loadComparison(key);
 };
 
+window.loadCustomComparison = async function() {
+  const input = document.getElementById('customCompareInput');
+  const query = input ? input.value.trim() : '';
+  if (!query) {
+    alert('Please enter concepts to compare (e.g., "AdamW vs Lion" or "CNN vs ViT")');
+    return;
+  }
+  await window.loadComparison(query);
+};
+
 window.loadComparison = async function(key) {
   const body = document.getElementById('comparisonModalBody');
   const title = document.getElementById('comparisonModalTitle');
 
-  // Update active pill button
+  // Update active pill button if matching
   document.querySelectorAll('#comparisonModal .action-pill-btn').forEach(btn => {
-    btn.classList.toggle('active-toggle', btn.getAttribute('onclick').includes(key));
+    const onclickStr = btn.getAttribute('onclick') || '';
+    btn.classList.toggle('active-toggle', onclickStr.includes(key));
   });
 
-  body.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Synthesizing comparison matrix...</div>';
+  body.innerHTML = '<div style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--accent);">⚖️</div><div>Synthesizing dynamic AI comparison matrix...</div></div>';
 
   try {
     const res = await fetch('/api/ai/compare', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ comparison_key: key })
+      body: JSON.stringify({ 
+        comparison_key: key,
+        api_key_override: AppState.apiKey || null
+      })
     });
     if (!res.ok) throw new Error('Failed to load comparison');
     const data = await res.json();
@@ -404,7 +426,7 @@ window.loadComparison = async function(key) {
         </tbody>
       </table>
       <div style="margin-top: 1.25rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted);">
-        <strong>Grounding Sources:</strong> ${data.citations.join(' • ')}
+        <strong>Grounding Sources:</strong> ${data.citations ? data.citations.join(' • ') : 'CS229 Foundations'}
       </div>
     `;
   } catch (err) {
@@ -417,15 +439,23 @@ window.openDiagramExplainer = async function(unitId = 'unit-tb-01') {
   const modal = document.getElementById('diagramExplainerModal');
   const body = document.getElementById('diagramExplainerBody');
   const title = document.getElementById('diagramExplainerTitle');
+  const select = document.getElementById('diagramSelect');
 
-  body.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Analyzing visual diagram elements & vector flows...</div>';
+  if (select && unitId) {
+    select.value = unitId;
+  }
+
+  body.innerHTML = '<div style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><div style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--accent);">🔍</div><div>Analyzing visual diagram elements & tensor vector flows with AI...</div></div>';
   modal.classList.add('open');
 
   try {
     const res = await fetch('/api/ai/diagram-explain', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ unit_id: unitId })
+      body: JSON.stringify({ 
+        unit_id: unitId,
+        api_key_override: AppState.apiKey || null
+      })
     });
     if (!res.ok) throw new Error('Failed to analyze diagram');
     const data = await res.json();

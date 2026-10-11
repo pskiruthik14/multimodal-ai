@@ -1121,29 +1121,66 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ==========================================================================
-   Responsive Adaptations
+   Responsive Adaptations & Layout Alignment
    ========================================================================== */
+
+.revision-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .app-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.85rem 1.5rem;
+  }
+}
 
 @media (max-width: 1024px) {
   .chat-container {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
   .chat-sidebar {
-    display: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .revision-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .app-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     padding: 1rem;
+    gap: 0.85rem;
+  }
+  .brand-section {
+    justify-content: space-between;
+    width: 100%;
   }
   .nav-tabs {
     overflow-x: auto;
     width: 100%;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.35rem;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.5rem;
   }
   .main-container {
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 0.85rem;
+  }
+  .chat-main-panel {
+    height: 620px;
   }
 }

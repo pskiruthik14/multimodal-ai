@@ -111,6 +111,9 @@ window.RevisionModule = {
 
   async generateAIFlashcards() {
     const aiBtn = document.getElementById('aiGenerateFlashcardsBtn');
+    const topicSelect = document.getElementById('flashcardTopicSelect');
+    const topicId = topicSelect ? topicSelect.value : 'topic-1';
+
     if (aiBtn) {
       aiBtn.disabled = true;
       aiBtn.innerText = '✨ Synthesizing Cards...';
@@ -121,7 +124,7 @@ window.RevisionModule = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          topic_id: 'topic-1',
+          topic_id: topicId,
           num_cards: 3,
           api_key_override: AppState.apiKey || null
         })
@@ -132,7 +135,7 @@ window.RevisionModule = {
       this.flashcards = newCards.concat(this.flashcards);
       this.currentCardIdx = 0;
       this.renderCurrentFlashcard();
-      alert(`✨ Synthesized ${newCards.length} novel AI Leitner flashcards!`);
+      alert(`✨ Synthesized ${newCards.length} novel AI Leitner flashcards for ${topicId}!`);
     } catch (err) {
       alert('Failed to synthesize flashcards: ' + err.message);
     } finally {
@@ -144,46 +147,12 @@ window.RevisionModule = {
   },
 
   async loadCheatSheet(topicId) {
+    this.activeTopicId = topicId;
     try {
       const res = await fetch(`/api/revision/cheat-sheet/${topicId}`);
       if (!res.ok) return;
       const sheet = await res.json();
-
-      const container = document.getElementById('cheatSheetContent');
-      if (!container) return;
-
-      container.innerHTML = `
-        <div style="margin-bottom: 1.5rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
-          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
-            ${sheet.title}
-          </h3>
-          <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent);">
-            Citations: ${sheet.citations.join(' • ')}
-          </div>
-        </div>
-
-        <div style="margin-bottom: 1.5rem;">
-          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.65rem;">
-            Key Mathematical Formulas:
-          </h4>
-          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            ${sheet.key_formulas.map(f => `
-              <div style="background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-main);">
-                ${f}
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <div>
-          <h4 style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.65rem;">
-            Core Takeaways & Common Pitfalls:
-          </h4>
-          <ul style="padding-left: 1.25rem; font-size: 0.92rem; color: var(--text-main); line-height: 1.7;">
-            ${sheet.core_insights.map(i => `<li>${i}</li>`).join('')}
-          </ul>
-        </div>
-      `;
+      this.renderCheatSheetContent(sheet);
 
       // Update audio brief script
       const audioBriefRes = await fetch(`/api/revision/audio-brief/${topicId}`);
@@ -193,6 +162,94 @@ window.RevisionModule = {
       }
     } catch (err) {
       console.error('Failed to load cheat sheet:', err);
+    }
+  },
+
+  renderCheatSheetContent(sheet) {
+    const container = document.getElementById('cheatSheetContent');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div style="margin-bottom: 1.5rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+        <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          ${sheet.title}
+        </h3>
+        <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent);">
+          Citations: ${sheet.citations ? sheet.citations.join(' • ') : 'Course Syllabus'}
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <h4 style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.65rem;">
+          Key Mathematical Formulas:
+        </h4>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          ${sheet.key_formulas.map(f => `
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.88rem; color: var(--text-main);">
+              ${f}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div>
+        <h4 style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.65rem;">
+          Core Takeaways & Common Pitfalls:
+        </h4>
+        <ul style="padding-left: 1.25rem; font-size: 0.92rem; color: var(--text-main); line-height: 1.7;">
+          ${sheet.core_insights.map(i => `<li>${i}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  },
+
+  async synthesizeAICheatSheet() {
+    const topicId = this.activeTopicId || 'topic-1';
+    const btn = document.getElementById('aiSynthesizeCheatSheetBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerText = '✨ Synthesizing...';
+    }
+
+    try {
+      const res = await fetch('/api/revision/ai-cheat-sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic_id: topicId,
+          api_key_override: AppState.apiKey || null
+        })
+      });
+      if (!res.ok) throw new Error('AI Cheat Sheet generation failed');
+      const data = await res.json();
+      this.renderCheatSheetContent(data);
+    } catch (err) {
+      alert('AI Cheat Sheet Error: ' + err.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = '✨ AI Synthesize Cheat Sheet';
+      }
+    }
+  },
+
+  async synthesizeAIAudioBrief() {
+    const topicId = this.activeTopicId || 'topic-1';
+    try {
+      const res = await fetch('/api/revision/ai-audio-brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic_id: topicId,
+          api_key_override: AppState.apiKey || null
+        })
+      });
+      if (!res.ok) throw new Error('AI Audio Brief generation failed');
+      const data = await res.json();
+      this.currentAudioBrief = data;
+      this.playAudioBrief();
+    } catch (err) {
+      alert('AI Audio Brief Error: ' + err.message);
     }
   },
 
@@ -209,13 +266,17 @@ window.RevisionModule = {
       const daysInput = document.getElementById('scheduleDaysInput');
       const days = daysInput ? parseInt(daysInput.value) : 7;
 
+      planBtn.disabled = true;
+      planBtn.innerText = '⚡ Planning Schedule with AI...';
+
       try {
         const res = await fetch('/api/revision/study-schedule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             days_until_exam: days,
-            hours_per_day: 2.0
+            hours_per_day: 2.0,
+            api_key_override: AppState.apiKey || null
           })
         });
 
@@ -225,6 +286,9 @@ window.RevisionModule = {
         }
       } catch (err) {
         alert('Failed to generate schedule: ' + err.message);
+      } finally {
+        planBtn.disabled = false;
+        planBtn.innerText = 'Generate Schedule';
       }
     });
   },

@@ -393,7 +393,15 @@
                 Loading flashcards...
               </div>
             </div>
-            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+              <select id="flashcardTopicSelect" class="chat-input" style="font-size: 0.8rem; padding: 0.35rem 0.65rem; min-height: 38px;">
+                <option value="topic-1">Topic 1: Loss Functions & Convexity</option>
+                <option value="topic-2">Topic 2: Optimizers & Adam</option>
+                <option value="topic-3">Topic 3: MLPs & Backprop</option>
+                <option value="topic-4">Topic 4: CNNs & ResNet</option>
+                <option value="topic-5">Topic 5: LSTMs & Recurrent</option>
+                <option value="topic-6">Topic 6: Transformers & Attention</option>
+              </select>
               <button id="aiGenerateFlashcardsBtn" class="btn-primary" style="font-size: 0.85rem;">
                 ✨ AI Synthesize Flashcards
               </button>
@@ -410,17 +418,20 @@
         </div>
 
         <!-- Cheat-Sheet & Audio Brief -->
-        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem;">
+        <div class="revision-grid">
           <div class="glass-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem;">
               <h3 style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; color: var(--text-main);">📑 Targeted Topic Cheat-Sheet</h3>
-              <div style="display: flex; gap: 0.35rem;">
+              <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
                 <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-1')">Topic 1</button>
                 <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-2')">Topic 2</button>
                 <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-3')">Topic 3</button>
                 <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-4')">Topic 4</button>
                 <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-5')">Topic 5</button>
                 <button class="action-pill-btn" onclick="window.RevisionModule.loadCheatSheet('topic-6')">Topic 6</button>
+                <button id="aiSynthesizeCheatSheetBtn" class="btn-primary" style="font-size: 0.78rem; padding: 0.35rem 0.85rem; margin-left: 0.25rem;" onclick="window.RevisionModule.synthesizeAICheatSheet()">
+                  ✨ AI Synthesize Cheat Sheet
+                </button>
               </div>
             </div>
             <div id="cheatSheetContent">
@@ -440,9 +451,14 @@
                 <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">Synthesized with course citations</div>
               </div>
             </div>
-            <button class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1.25rem;" onclick="window.RevisionModule.playAudioBrief()">
-              🔊 Play Audio Brief Narration
-            </button>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.25rem;">
+              <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="window.RevisionModule.playAudioBrief()">
+                🔊 Play Audio Brief Narration
+              </button>
+              <button class="btn-outline" style="width: 100%; justify-content: center; font-size: 0.82rem;" onclick="window.RevisionModule.synthesizeAIAudioBrief()">
+                ✨ AI Synthesize Audio Script
+              </button>
+            </div>
           </div>
         </div>
 
@@ -707,12 +723,18 @@
 
   <!-- AI Architecture & Concept Comparison Modal -->
   <div id="comparisonModal" class="modal-backdrop">
-    <div class="modal-window" style="max-width: 800px;">
+    <div class="modal-window" style="max-width: 860px;">
       <div class="modal-header">
         <h3 id="comparisonModalTitle" style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">⚖️ AI Architectural Comparison Matrix</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- Custom AI Comparison Input -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center;">
+          <input type="text" id="customCompareInput" class="chat-input" placeholder="Compare ANY concepts (e.g., AdamW vs Lion, CNN vs ViT, LoRA vs Full Fine-Tuning)..." style="flex: 1;" onkeydown="if(event.key==='Enter') window.loadCustomComparison()">
+          <button class="btn-primary" onclick="window.loadCustomComparison()" style="white-space: nowrap;">✨ Compare with AI</button>
+        </div>
+
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
           <button class="action-pill-btn active-toggle" onclick="window.loadComparison('optimizers')">Optimizers: Adam vs SGD</button>
           <button class="action-pill-btn" onclick="window.loadComparison('losses')">Losses: Cross-Entropy vs MSE</button>
@@ -727,13 +749,24 @@
 
   <!-- AI Multimodal Diagram Explainer Modal -->
   <div id="diagramExplainerModal" class="modal-backdrop">
-    <div class="modal-window" style="max-width: 700px;">
+    <div class="modal-window" style="max-width: 760px;">
       <div class="modal-header">
         <h3 id="diagramExplainerTitle" style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">🔍 AI Multimodal Diagram & Vector Explainer</h3>
         <button class="modal-close-btn">&times;</button>
       </div>
-      <div id="diagramExplainerBody" class="modal-body">
-        <!-- Rendered by JS -->
+      <div class="modal-body">
+        <div style="display: flex; gap: 0.65rem; margin-bottom: 1.25rem; align-items: center; flex-wrap: wrap;">
+          <label style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em;">Select Technical Figure:</label>
+          <select id="diagramSelect" class="chat-input" style="flex: 1; min-width: 260px;" onchange="window.openDiagramExplainer(this.value)">
+            <option value="unit-tb-01">Figure 1.4: Ill-Conditioned Quadratic Bowl & Gradient Oscillations</option>
+            <option value="unit-sl-02">Slide 14: Adam Bias Correction Estimator Curve</option>
+            <option value="unit-sl-04">Slide 8: ResNet Residual Block with Identity Shortcut (+x)</option>
+            <option value="unit-tb-06">Figure 6.1: Scaled Dot-Product & Multi-Head Attention</option>
+          </select>
+        </div>
+        <div id="diagramExplainerBody">
+          <!-- Rendered by JS -->
+        </div>
       </div>
     </div>
   </div>
