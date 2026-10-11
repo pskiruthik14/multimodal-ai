@@ -193,11 +193,22 @@
     <section id="tab-map" class="tab-pane">
       <div class="flow-map-container">
         <div class="flow-map-toolbar">
-          <div style="font-family: var(--font-serif); font-weight: 700; font-size: 1.15rem; color: var(--text-main);">
-            🗺️ Interactive Course Flow & Concept Prerequisite DAG
+          <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+            <div style="font-family: var(--font-serif); font-weight: 700; font-size: 1.15rem; color: var(--text-main);">
+              🗺️ Interactive Course Flow & Concept Prerequisite DAG
+            </div>
+            <select id="mapTopicJumpSelect" class="chat-input" style="min-height: 34px; padding: 0.25rem 0.75rem; font-size: 0.82rem; border-radius: var(--radius-sm);" onchange="window.selectTopicFromDropdown(this.value)">
+              <option value="">Jump to Topic Node...</option>
+              <option value="topic-1">Topic 1: Optimization Landscapes</option>
+              <option value="topic-2">Topic 2: Gradient Descent & Adam</option>
+              <option value="topic-3">Topic 3: Multi-Layer Perceptrons</option>
+              <option value="topic-4">Topic 4: Convolutional Nets (CNN)</option>
+              <option value="topic-5">Topic 5: Recurrent Nets & LSTMs</option>
+              <option value="topic-6">Topic 6: Self-Attention & Transformers</option>
+            </select>
           </div>
           <div class="legend-items">
-            <span><span class="legend-dot dot-mastered"></span> Mastered ($P(L_t) \ge 85\%$)</span>
+            <span><span class="legend-dot dot-mastered"></span> Mastered ($\ge 85\%$)</span>
             <span><span class="legend-dot dot-developing"></span> Developing ($50\% - 84\%$)</span>
             <span><span class="legend-dot dot-learning"></span> Learning ($< 50\%$)</span>
           </div>
@@ -209,7 +220,7 @@
 
         <div id="mapTopicDetails">
           <div style="background: var(--bg-card); padding: 1.25rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border); border-top: 3px solid var(--accent); color: var(--text-muted); font-size: 0.92rem; line-height: 1.6;">
-            👆 Click on any topic node above to inspect prerequisites, key formulas, and launch a targeted assessment!
+            👆 Click on any topic node above or use the dropdown to inspect prerequisites, key formulas, and launch a targeted assessment!
           </div>
         </div>
       </div>
@@ -567,39 +578,112 @@
     <!-- ----------------- TAB 7: KNOWLEDGE HUB ----------------- -->
     <section id="tab-ingestion" class="tab-pane">
       <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <!-- Ingestion Zone -->
-        <div class="glass-card" id="uploadDropzone" style="border: 2px dashed var(--border); text-align: center; padding: 2.75rem 1.5rem;">
+        
+        <!-- Knowledge Hub Header & Overview Metrics -->
+        <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                <span style="font-size: 1.4rem;">📚</span>
+                <h2 style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 700; color: var(--text-main);">Multimodal Knowledge Hub</h2>
+                <span class="course-badge" style="padding: 0.2rem 0.65rem; font-size: 0.72rem; color: #2E7D32;">● 100% Grounded</span>
+              </div>
+              <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0; max-width: 650px;">
+                Unified knowledge repository syncing <strong>Lecture Video Timestamps</strong>, <strong>Textbook Pages</strong>, and <strong>Slide Vector Diagrams</strong> with strict source citations.
+              </p>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <button id="triggerUploadBtn" class="btn-primary" style="font-size: 0.82rem; padding: 0.5rem 1rem;">
+                📤 Ingest New Material
+              </button>
+              <button id="loadDummyDataBtn" class="btn-outline" style="font-size: 0.82rem; padding: 0.5rem 1rem;" onclick="window.loadDummyMaterials()">
+                📥 Ingest Sample Datasets
+              </button>
+            </div>
+          </div>
+
+          <!-- Knowledge Hub Stats Strip -->
+          <div id="hubStatsStrip" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: var(--accent);">52</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Total Units</div>
+            </div>
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: #1976D2;">18</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">🎥 Videos</div>
+            </div>
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: #388E3C;">18</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">📖 Textbooks</div>
+            </div>
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: #F57C00;">16</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">🖼️ Slides</div>
+            </div>
+            <div style="background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.75rem 1rem; border-radius: var(--radius-sm); text-align: center;">
+              <div style="font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: #7B1FA2;">6</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Core Topics</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ingestion Upload Dropzone -->
+        <div class="glass-card" id="uploadDropzone" style="border: 2px dashed var(--border); text-align: center; padding: 2rem 1.5rem; background: var(--bg-card); transition: var(--transition-fast);">
           <input type="file" id="materialFileInput" style="display: none;" accept=".pdf,.pptx,.ppt,.vtt,.srt,.txt,.json">
-          <div style="font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent);">📤</div>
-          <h3 style="font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">Ingest New Multimodal Course Materials</h3>
-          <p style="font-size: 0.9rem; color: var(--text-muted); max-width: 550px; margin: 0 auto 1.35rem; line-height: 1.6;">
-            Drag and drop <strong>Textbooks (PDF)</strong>, <strong>Slide Decks (PPTX)</strong>, or <strong>Lecture Transcripts (VTT/SRT)</strong> without manual preprocessing.
+          <div style="font-size: 2.2rem; margin-bottom: 0.35rem; color: var(--accent);">📤</div>
+          <h4 style="font-family: var(--font-serif); font-size: 1.2rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--text-main);">Drag & Drop Course Documents Here</h4>
+          <p style="font-size: 0.88rem; color: var(--text-muted); max-width: 550px; margin: 0 auto 1.15rem; line-height: 1.5;">
+            Drop <strong>Textbooks (.pdf)</strong>, <strong>Slide Decks (.pptx)</strong>, or <strong>Lecture Transcripts (.vtt, .srt, .txt)</strong>. AI extracts formulas, vector diagrams, and page citations automatically.
           </p>
-          <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
-            <button id="triggerUploadBtn" class="btn-primary">
-              📁 Select Course File to Ingest
+          <div style="display: flex; gap: 0.65rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn-primary" style="font-size: 0.82rem; padding: 0.45rem 1rem;" onclick="document.getElementById('materialFileInput').click()">
+              📁 Browse Local File
             </button>
-            <button id="loadDummyDataBtn" class="btn-outline" onclick="window.loadDummyMaterials()">
-              📥 Ingest Sample Dummy Datasets
+            <button class="btn-outline" style="font-size: 0.82rem; padding: 0.45rem 1rem;" onclick="window.loadDummyMaterials()">
+              📥 Ingest Sample Files
             </button>
           </div>
           <div id="uploadStatusText" style="margin-top: 0.85rem; font-size: 0.85rem; color: var(--text-muted);"></div>
         </div>
 
-        <!-- Filter & Browser -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
-          <h3 style="font-family: var(--font-serif); font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Ingested Content Units & Sources</h3>
-          <div style="display: flex; gap: 0.35rem;">
-            <button class="action-pill-btn source-filter-btn active-toggle" data-filter="all">All Sources</button>
-            <button class="action-pill-btn source-filter-btn" data-filter="video">🎥 Videos</button>
-            <button class="action-pill-btn source-filter-btn" data-filter="textbook">📖 Textbooks</button>
-            <button class="action-pill-btn source-filter-btn" data-filter="slide">🖼️ Slides</button>
+        <!-- Filter & Search Controls Bar -->
+        <div class="glass-card" style="padding: 1.15rem 1.35rem;">
+          <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 260px;">
+                <input type="text" id="knowledgeSearchInput" class="chat-input" placeholder="🔍 Search by concept, formula, keyword, or citation (e.g. 'softmax', 'Adam', 'ResNet')..." style="width: 100%; min-height: 38px; font-size: 0.88rem;" oninput="window.IngestionModule.handleSearch()">
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <select id="knowledgeTopicFilter" class="chat-input" style="min-height: 38px; font-size: 0.82rem; padding: 0.35rem 0.75rem;" onchange="window.IngestionModule.handleTopicFilter(this.value)">
+                  <option value="all">All Topics (6 Topics)</option>
+                  <option value="topic-1">Topic 1: Optimization Landscapes</option>
+                  <option value="topic-2">Topic 2: Gradient Descent & Adam</option>
+                  <option value="topic-3">Topic 3: Multi-Layer Perceptrons</option>
+                  <option value="topic-4">Topic 4: Convolutional Nets (CNN)</option>
+                  <option value="topic-5">Topic 5: Recurrent Nets & LSTMs</option>
+                  <option value="topic-6">Topic 6: Self-Attention & Transformers</option>
+                </select>
+                <span id="knowledgeUnitsCountBadge" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border); padding: 0.4rem 0.75rem; border-radius: var(--radius-sm); white-space: nowrap;">
+                  52 content units
+                </span>
+              </div>
+            </div>
+
+            <!-- Modality Filter Buttons -->
+            <div style="display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; border-top: 1px solid var(--border); padding-top: 0.75rem;">
+              <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em; margin-right: 0.25rem;">Filter Modality:</span>
+              <button class="action-pill-btn source-filter-btn active-toggle" data-filter="all">All Sources</button>
+              <button class="action-pill-btn source-filter-btn" data-filter="video">🎥 Videos</button>
+              <button class="action-pill-btn source-filter-btn" data-filter="textbook">📖 Textbooks</button>
+              <button class="action-pill-btn source-filter-btn" data-filter="slide">🖼️ Slides</button>
+            </div>
           </div>
         </div>
 
         <!-- Grid of content units -->
         <div id="knowledgeUnitsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
-          <!-- Rendered by JS -->
+          <!-- Rendered dynamically by JS -->
         </div>
       </div>
     </section>

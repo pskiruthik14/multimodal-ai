@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Default tab initialize
   if (window.ChatModule) window.ChatModule.init();
   if (window.KnowledgeMapModule) window.KnowledgeMapModule.init();
+  if (window.IngestionModule) window.IngestionModule.init();
 });
 
 function initNavigation() {
@@ -54,11 +55,7 @@ function switchTab(tabId) {
 
   // Trigger tab-specific loaders
   if (tabId === 'map' && window.KnowledgeMapModule) {
-    if (!window.KnowledgeMapModule.canvas) {
-      window.KnowledgeMapModule.init();
-    } else {
-      window.KnowledgeMapModule.render();
-    }
+    window.KnowledgeMapModule.onTabActivated();
   } else if (tabId === 'assessment' && window.AssessmentModule) {
     window.AssessmentModule.init();
   } else if (tabId === 'analytics' && window.LearnerModelModule) {
